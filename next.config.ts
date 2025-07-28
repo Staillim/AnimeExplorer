@@ -1,3 +1,4 @@
+
 import type {NextConfig} from 'next';
 
 const nextConfig: NextConfig = {
@@ -21,6 +22,18 @@ const nextConfig: NextConfig = {
         hostname: 'assets.example.com',
         port: '',
         pathname: '/account123/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'ramenparados.com',
+        port: '',
+        pathname: '/**',
+      },
+       {
+        protocol: 'https',
+        hostname: 'static.wikia.nocookie.net',
+        port: '',
+        pathname: '/**',
       },
     ],
   },
