@@ -1,9 +1,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import type { Anime } from '@/lib/types';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Star } from 'lucide-react';
+import { Card } from '@/components/ui/card';
 
 interface AnimeCardProps {
   anime: Anime;
@@ -12,32 +10,20 @@ interface AnimeCardProps {
 export default function AnimeCard({ anime }: AnimeCardProps) {
   return (
     <Link href={`/anime/${anime.id}`} className="group block">
-      <Card className="h-full overflow-hidden transition-all duration-300 ease-in-out hover:shadow-2xl hover:border-primary/50 hover:-translate-y-1">
-        <CardHeader className="p-0">
-          <div className="relative aspect-[2/3] w-full">
-            <Image
-              src={anime.coverImage}
-              alt={`Cover of ${anime.title}`}
-              data-ai-hint={anime.dataAiHint}
-              fill
-              className="object-cover transition-transform duration-300 group-hover:scale-105"
-            />
-          </div>
-        </CardHeader>
-        <CardContent className="p-4">
-          <CardTitle className="text-lg leading-tight font-bold group-hover:text-primary transition-colors">
+      <Card className="relative h-auto aspect-[2/3] overflow-hidden rounded-lg transition-all duration-300 ease-in-out hover:scale-105 hover:shadow-2xl hover:shadow-primary/20 border-0">
+        <Image
+          src={anime.coverImage}
+          alt={`Cover of ${anime.title}`}
+          data-ai-hint={anime.dataAiHint}
+          fill
+          className="object-cover"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+        <div className="absolute bottom-0 left-0 p-4 w-full">
+          <h3 className="text-lg font-bold text-white opacity-0 group-hover:opacity-100 transform translate-y-4 group-hover:translate-y-0 transition-all duration-300">
             {anime.title}
-          </CardTitle>
-        </CardContent>
-        <CardFooter className="p-4 pt-0 flex flex-wrap gap-2 items-center">
-          {anime.genres.slice(0, 2).map(genre => (
-            <Badge key={genre} variant="secondary">{genre}</Badge>
-          ))}
-          <div className="flex items-center gap-1 text-sm text-amber-500 ml-auto">
-            <Star className="w-4 h-4 fill-current"/>
-            <span>{anime.rating}</span>
-          </div>
-        </CardFooter>
+          </h3>
+        </div>
       </Card>
     </Link>
   );
