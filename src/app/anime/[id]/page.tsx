@@ -12,7 +12,6 @@ import { Badge } from '@/components/ui/badge';
 import { Star, Calendar, Tv, PlayCircle, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { getDecryptedUrl } from './actions';
 
 async function getAnime(id: string): Promise<Anime | null> {
     const docRef = doc(db, 'animes', id);
@@ -32,8 +31,6 @@ export default function AnimeDetailPage() {
     const [anime, setAnime] = useState<Anime | null>(null);
     const [loading, setLoading] = useState(true);
     const [selectedChapterIndex, setSelectedChapterIndex] = useState(0);
-    const [decryptedUrl, setDecryptedUrl] = useState<string>('');
-    const [isPlayerLoading, setIsPlayerLoading] = useState(true);
 
     const updateUserWatchHistory = useCallback(async (newChapterIndex: number) => {
         if (!user || !animeId) return;
@@ -62,14 +59,12 @@ export default function AnimeDetailPage() {
         getAnime(animeId).then(animeData => {
             if (animeData) {
                 setAnime(animeData);
-                let initialChapterIndex = 0;
                 if (userProfile?.watchProgress && userProfile.watchProgress[animeId] !== undefined) {
                     const lastWatchedIndex = userProfile.watchProgress[animeId];
                     if(lastWatchedIndex < animeData.chapters.length) {
-                       initialChapterIndex = lastWatchedIndex;
+                       setSelectedChapterIndex(lastWatchedIndex);
                     }
                 }
-                handleChapterSelect(initialChapterIndex, animeData.chapters[initialChapterIndex]?.url);
             } else {
                 notFound();
             }
@@ -78,23 +73,9 @@ export default function AnimeDetailPage() {
         });
     }, [animeId, userProfile]);
 
-    const handleChapterSelect = async (index: number, encryptedUrl?: string) => {
-        const urlToDecrypt = encryptedUrl || anime?.chapters[index]?.url;
-        if (!urlToDecrypt) return;
-
+    const handleChapterSelect = (index: number) => {
         setSelectedChapterIndex(index);
-        setIsPlayerLoading(true);
         updateUserWatchHistory(index);
-        
-        try {
-            const url = await getDecryptedUrl(urlToDecrypt);
-            setDecryptedUrl(url);
-        } catch (error) {
-            console.error("Failed to decrypt URL", error);
-            setDecryptedUrl(''); // Clear url on error
-        } finally {
-            setIsPlayerLoading(false);
-        }
     };
 
     if (loading) {
@@ -168,20 +149,16 @@ export default function AnimeDetailPage() {
                         <h2 className="text-2xl font-bold font-headline text-primary">
                             Viendo: {selectedChapter.title || `Capítulo ${selectedChapterIndex + 1}`}
                         </h2>
-                        <div className="aspect-video bg-black rounded-lg overflow-hidden shadow-2xl shadow-black/50 flex items-center justify-center">
-                           {isPlayerLoading ? (
-                                <Loader2 className="h-12 w-12 animate-spin text-primary" />
-                           ) : (
-                               <iframe
-                                    key={decryptedUrl} // Use decryptedUrl as key to force re-render
-                                    src={decryptedUrl}
-                                    title={selectedChapter.title || `Capítulo ${selectedChapterIndex + 1}`}
-                                    frameBorder="0"
-                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                                    allowFullScreen
-                                    className="w-full h-full"
-                                ></iframe>
-                           )}
+                        <div className="aspect-video bg-black rounded-lg overflow-hidden shadow-2xl shadow-black/50">
+                           <iframe
+                                key={selectedChapter.url}
+                                src={selectedChapter.url}
+                                title={selectedChapter.title || `Capítulo ${selectedChapterIndex + 1}`}
+                                frameBorder="0"
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                allowFullScreen
+                                className="w-full h-full"
+                            ></iframe>
                         </div>
                     </div>
 
