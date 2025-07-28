@@ -150,15 +150,15 @@ export default function AnimeDetailPage() {
                             Viendo: {selectedChapter.title || `Capítulo ${selectedChapterIndex + 1}`}
                         </h2>
                         <div className="aspect-video bg-black rounded-lg overflow-hidden shadow-2xl shadow-black/50">
-                             <video
+                           <iframe
                                 key={selectedChapter.url}
                                 src={selectedChapter.url}
-                                controls
-                                autoPlay
-                                className="w-full h-full object-contain"
-                            >
-                                Tu navegador no soporta el tag de video.
-                            </video>
+                                title={selectedChapter.title || `Capítulo ${selectedChapterIndex + 1}`}
+                                frameBorder="0"
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                allowFullScreen
+                                className="w-full h-full"
+                            ></iframe>
                         </div>
                     </div>
 
