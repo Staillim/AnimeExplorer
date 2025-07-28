@@ -19,9 +19,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useToast } from "@/lib/hooks/use-toast";
 import { Loader2, PlusCircle, Trash2 } from "lucide-react";
-import { collection, addDoc } from "firebase/firestore";
+import { collection, addDoc, doc, updateDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { Separator } from "../ui/separator";
+import type { Anime } from "@/lib/types";
 
 const chapterSchema = z.object({
   title: z.string().optional(),
@@ -41,22 +42,34 @@ const formSchema = z.object({
   dataAiHint: z.string().min(2, { message: "AI hint must be at least 2 characters." }),
 });
 
-export function AddAnimeForm() {
+type FormData = z.infer<typeof formSchema>;
+
+interface AddAnimeFormProps {
+  animeToEdit?: Anime;
+  onSuccess?: () => void;
+}
+
+export function AddAnimeForm({ animeToEdit, onSuccess }: AddAnimeFormProps) {
   const { toast } = useToast();
-  const form = useForm<z.infer<typeof formSchema>>({
+  const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
-    defaultValues: {
-      title: "",
-      season: "",
-      year: new Date().getFullYear(),
-      coverImage: "",
-      bannerImage: "",
-      description: "",
-      genres: "",
-      rating: 7.0,
-      chapters: [{ title: "Capítulo 1", url: "" }],
-      dataAiHint: "anime",
-    },
+    defaultValues: animeToEdit
+      ? {
+          ...animeToEdit,
+          genres: animeToEdit.genres.join(", "),
+        }
+      : {
+          title: "",
+          season: "",
+          year: new Date().getFullYear(),
+          coverImage: "",
+          bannerImage: "",
+          description: "",
+          genres: "",
+          rating: 7.0,
+          chapters: [{ title: "Capítulo 1", url: "" }],
+          dataAiHint: "anime",
+        },
   });
 
   const { fields, append, remove } = useFieldArray({
@@ -65,8 +78,9 @@ export function AddAnimeForm() {
   });
 
   const { isSubmitting } = form.formState;
+  const isEditMode = !!animeToEdit;
 
-  async function onSubmit(values: z.infer<typeof formSchema>) {
+  async function onSubmit(values: FormData) {
     try {
       const genresArray = values.genres.split(',').map(g => g.trim());
       const submissionData = {
@@ -75,17 +89,28 @@ export function AddAnimeForm() {
         genres: genresArray,
       };
 
-      await addDoc(collection(db, "animes"), submissionData);
+      if (isEditMode) {
+        const docRef = doc(db, "animes", animeToEdit.id);
+        await updateDoc(docRef, submissionData);
+        toast({
+          title: "Contenido Actualizado",
+          description: `${values.title} ha sido actualizado correctamente.`,
+        });
+      } else {
+        await addDoc(collection(db, "animes"), submissionData);
+        toast({
+          title: "Contenido Agregado",
+          description: `${values.title} ha sido agregado al catálogo.`,
+        });
+        form.reset();
+      }
       
-      toast({
-        title: "Contenido Agregado",
-        description: `${values.title} ha sido agregado al catálogo.`,
-      });
-      form.reset();
+      if (onSuccess) onSuccess();
+
     } catch (error: any) {
       toast({
         variant: "destructive",
-        title: "Error al agregar contenido",
+        title: isEditMode ? "Error al actualizar" : "Error al agregar",
         description: error.message,
       });
     }
@@ -96,8 +121,13 @@ export function AddAnimeForm() {
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <CardHeader>
-            <CardTitle>Agregar Nuevo Contenido</CardTitle>
-            <CardDescription>Rellena los campos para añadir un nuevo anime o película al catálogo.</CardDescription>
+            <CardTitle>{isEditMode ? "Editar Contenido" : "Agregar Nuevo Contenido"}</CardTitle>
+            <CardDescription>
+              {isEditMode 
+                ? `Editando los detalles de ${animeToEdit.title}.`
+                : "Rellena los campos para añadir un nuevo anime o película al catálogo."
+              }
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -304,7 +334,7 @@ export function AddAnimeForm() {
           <CardFooter>
             <Button type="submit" disabled={isSubmitting} className="w-full" size="lg">
               {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Guardar Contenido
+              {isEditMode ? "Guardar Cambios" : "Guardar Contenido"}
             </Button>
           </CardFooter>
         </form>
