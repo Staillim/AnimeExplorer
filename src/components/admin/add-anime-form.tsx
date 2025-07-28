@@ -71,7 +71,7 @@ export function AddAnimeForm() {
       const genresArray = values.genres.split(',').map(g => g.trim());
       const submissionData = {
         ...values,
-        bannerImage: values.bannerImage || `https://placehold.co/1200x400`,
+        bannerImage: values.bannerImage || `https://placehold.co/1200x400.png`,
         genres: genresArray,
       };
 
