@@ -9,6 +9,19 @@ import type { AuthContextType, UserProfile } from "@/lib/types";
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+async function setSessionCookie(idToken: string) {
+  await fetch('/api/auth/session', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ idToken }),
+  });
+}
+
+async function clearSessionCookie() {
+  await fetch('/api/auth/session', { method: 'DELETE' });
+}
+
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
@@ -50,9 +63,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (firebaseUser) {
         setUser(firebaseUser);
         await fetchUserProfile(firebaseUser);
+        const idToken = await firebaseUser.getIdToken();
+        await setSessionCookie(idToken);
       } else {
         setUser(null);
         setUserProfile(null);
+        await clearSessionCookie();
       }
       setLoading(false);
     });

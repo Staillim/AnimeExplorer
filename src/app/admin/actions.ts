@@ -1,10 +1,13 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { collection, addDoc, doc, updateDoc } from 'firebase/firestore';
+import { collection, addDoc, doc, updateDoc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { encrypt } from '@/lib/crypto';
-import type { Anime } from '@/lib/types';
+import type { Anime, UserProfile } from '@/lib/types';
+import { cookies } from 'next/headers';
+import { getAuth } from 'firebase-admin/auth';
+import { adminApp } from '@/lib/firebase-admin';
 
 // This is a partial type, as the full form data has genres as a string.
 // We only need the chapters to encrypt them.
@@ -12,6 +15,26 @@ type AnimeFormData = Omit<Anime, 'id' | 'chapters'> & {
   chapters: { title?: string; url: string }[];
   genres: string; // In the form, genres are a comma-separated string
 };
+
+async function getAdminUserProfile(): Promise<UserProfile | null> {
+  try {
+    const sessionCookie = cookies().get('session')?.value;
+    if (!sessionCookie) {
+      return null;
+    }
+    const decodedToken = await getAuth(adminApp).verifySessionCookie(sessionCookie, true);
+    const userDocRef = doc(db, 'users', decodedToken.uid);
+    const userDocSnap = await getDoc(userDocRef);
+
+    if (userDocSnap.exists() && (userDocSnap.data() as UserProfile).role === 'admin') {
+      return userDocSnap.data() as UserProfile;
+    }
+    return null;
+  } catch (error) {
+    console.error('Error verifying session cookie:', error);
+    return null;
+  }
+}
 
 async function processAndEncryptData(values: AnimeFormData) {
   const genresArray = values.genres.split(',').map(g => g.trim());
@@ -31,6 +54,11 @@ async function processAndEncryptData(values: AnimeFormData) {
 }
 
 export async function addAnimeAction(values: AnimeFormData) {
+  const adminUser = await getAdminUserProfile();
+  if (!adminUser) {
+    return { success: false, message: 'Permission denied. You must be an administrator.' };
+  }
+
   try {
     const submissionData = await processAndEncryptData(values);
     await addDoc(collection(db, 'animes'), submissionData);
@@ -45,6 +73,11 @@ export async function addAnimeAction(values: AnimeFormData) {
 }
 
 export async function updateAnimeAction(id: string, values: AnimeFormData) {
+  const adminUser = await getAdminUserProfile();
+  if (!adminUser) {
+    return { success: false, message: 'Permission denied. You must be an administrator.' };
+  }
+  
   try {
     const submissionData = await processAndEncryptData(values);
     const docRef = doc(db, 'animes', id);
