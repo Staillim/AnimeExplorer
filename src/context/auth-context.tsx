@@ -1,3 +1,4 @@
+
 "use client";
 
 import { createContext, useContext, useEffect, useState, useCallback } from "react";
@@ -27,6 +28,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         displayName: firebaseUser.displayName || 'New User',
         watchedAnimes: [],
         role: 'user', // Default role
+        watchProgress: {},
       };
       await setDoc(userDocRef, newProfile);
       setUserProfile(newProfile);
@@ -35,13 +37,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const refetchUserProfile = useCallback(async () => {
     if (user) {
+      setLoading(true);
       await fetchUserProfile(user);
+      setLoading(false);
     }
   }, [user, fetchUserProfile]);
 
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      setLoading(true);
       if (firebaseUser) {
         setUser(firebaseUser);
         await fetchUserProfile(firebaseUser);

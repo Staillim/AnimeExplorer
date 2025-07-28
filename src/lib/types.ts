@@ -1,3 +1,4 @@
+
 import type { User as FirebaseUser } from "firebase/auth";
 
 export interface Chapter {
@@ -25,6 +26,9 @@ export interface UserProfile {
   displayName: string;
   watchedAnimes: string[];
   role?: 'admin' | 'user';
+  watchProgress?: {
+    [animeId: string]: number; // chapterIndex
+  };
 }
 
 export interface AuthContextType {
