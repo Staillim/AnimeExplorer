@@ -10,7 +10,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { handleRecommendation } from "@/app/recommendations/actions";
 import type { RecommendAnimeOutput } from "@/ai/flows/recommend-anime";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/lib/hooks/use-toast";
 import { Loader2, WandSparkles } from "lucide-react";
 
 const FormSchema = z.object({
