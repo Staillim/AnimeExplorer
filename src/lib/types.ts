@@ -1,3 +1,5 @@
+import type { User as FirebaseUser } from "firebase/auth";
+
 export interface Anime {
   id: string;
   title: string;
@@ -7,4 +9,19 @@ export interface Anime {
   genres: string[];
   year: number;
   rating: number;
+}
+
+export interface UserProfile {
+  uid: string;
+  email: string | null;
+  displayName: string;
+  watchedAnimes: string[];
+}
+
+export interface AuthContextType {
+  user: FirebaseUser | null;
+  userProfile: UserProfile | null;
+  loading: boolean;
+  logout: () => void;
+  refetchUserProfile: () => Promise<void>;
 }
