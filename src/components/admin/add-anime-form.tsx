@@ -49,8 +49,8 @@ export function AddAnimeForm() {
       title: "",
       season: "",
       year: new Date().getFullYear(),
-      coverImage: `https://placehold.co/400x600`,
-      bannerImage: `https://placehold.co/1200x400`,
+      coverImage: "",
+      bannerImage: "",
       description: "",
       genres: "",
       rating: 7.0,
@@ -71,7 +71,7 @@ export function AddAnimeForm() {
       const genresArray = values.genres.split(',').map(g => g.trim());
       const submissionData = {
         ...values,
-        bannerImage: values.bannerImage || '',
+        bannerImage: values.bannerImage || `https://placehold.co/1200x400`,
         genres: genresArray,
       };
 
@@ -151,7 +151,7 @@ export function AddAnimeForm() {
                   <FormItem>
                     <FormLabel>URL de Portada</FormLabel>
                     <FormControl>
-                      <Input {...field} />
+                      <Input {...field} placeholder="https://..." />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -164,8 +164,9 @@ export function AddAnimeForm() {
                   <FormItem>
                     <FormLabel>URL de Banner (Opcional)</FormLabel>
                     <FormControl>
-                      <Input {...field} />
+                      <Input {...field} placeholder="https://..." />
                     </FormControl>
+                    <FormDescription>Si se deja vacío, se usará un banner genérico.</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
