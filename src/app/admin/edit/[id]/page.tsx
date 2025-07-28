@@ -25,6 +25,7 @@ async function getAnime(id: string): Promise<Anime | null> {
 }
 
 export default function EditAnimePage({ params }: { params: { id: string } }) {
+  const { id } = params;
   const { userProfile, loading: authLoading } = useAuth();
   const router = useRouter();
   const [isAuthorized, setIsAuthorized] = useState(false);
@@ -44,7 +45,7 @@ export default function EditAnimePage({ params }: { params: { id: string } }) {
   useEffect(() => {
     if (!isAuthorized) return;
 
-    getAnime(params.id)
+    getAnime(id)
       .then(data => {
         if (data) {
           setAnime(data);
@@ -53,7 +54,7 @@ export default function EditAnimePage({ params }: { params: { id: string } }) {
         }
       })
       .finally(() => setLoadingAnime(false));
-  }, [isAuthorized, params.id]);
+  }, [isAuthorized, id]);
 
   const handleSuccess = () => {
     router.push('/admin');
