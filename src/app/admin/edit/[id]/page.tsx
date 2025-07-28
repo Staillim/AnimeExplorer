@@ -24,8 +24,7 @@ async function getAnime(id: string): Promise<Anime | null> {
   }
 }
 
-export default function EditAnimePage({ params }: { params: { id: string } }) {
-  const { id } = params;
+export default function EditAnimePage({ params: { id } }: { params: { id: string } }) {
   const { userProfile, loading: authLoading } = useAuth();
   const router = useRouter();
   const [isAuthorized, setIsAuthorized] = useState(false);
