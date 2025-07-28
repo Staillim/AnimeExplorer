@@ -33,10 +33,10 @@ export default function AdminPage() {
   return (
     <div className="space-y-8">
       <header className="text-center space-y-2">
-        <h1 className="text-4xl md:text-5xl font-bold font-headline text-primary">Admin Panel</h1>
-        <p className="text-lg text-muted-foreground">Manage the anime catalog.</p>
+        <h1 className="text-4xl md:text-5xl font-bold font-headline text-primary">Panel de Administración</h1>
+        <p className="text-lg text-muted-foreground">Agregar nuevo contenido al catálogo.</p>
       </header>
-      <div className="max-w-2xl mx-auto">
+      <div className="max-w-4xl mx-auto">
         <AddAnimeForm />
       </div>
     </div>

@@ -1,14 +1,22 @@
 import type { User as FirebaseUser } from "firebase/auth";
 
+export interface Chapter {
+  title?: string;
+  url: string;
+}
+
 export interface Anime {
   id: string;
   title: string;
   description: string;
   coverImage: string;
+  bannerImage?: string; 
   dataAiHint: string;
   genres: string[];
   year: number;
   rating: number;
+  season: string;
+  chapters: Chapter[];
 }
 
 export interface UserProfile {
