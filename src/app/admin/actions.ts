@@ -22,10 +22,10 @@ async function getAdminUserProfile(): Promise<UserProfile | null> {
   try {
     const sessionCookie = cookies().get('session')?.value;
     if (!sessionCookie) {
+      console.log('No session cookie found.');
       return null;
     }
-    
-    // Ensure adminApp is initialized before using getAuth
+
     if (!adminApp) {
         console.error("Firebase Admin SDK not initialized.");
         return null;
@@ -33,21 +33,26 @@ async function getAdminUserProfile(): Promise<UserProfile | null> {
 
     const decodedToken = await getAuth(adminApp).verifySessionCookie(sessionCookie, true);
     
-    // Use the Admin SDK to fetch the user document
     const adminDb = getFirestore(adminApp);
     const userDocRef = adminDb.collection('users').doc(decodedToken.uid);
     const userDocSnap = await userDocRef.get();
 
-    if (userDocSnap.exists && (userDocSnap.data() as UserProfile).role === 'admin') {
-      return userDocSnap.data() as UserProfile;
+    if (userDocSnap.exists()) {
+        const userProfile = userDocSnap.data() as UserProfile;
+        if (userProfile.role === 'admin') {
+            return userProfile;
+        } else {
+            console.log(`User ${decodedToken.uid} is not an admin.`);
+            return null;
+        }
     }
+    console.log(`User profile for ${decodedToken.uid} does not exist.`);
     return null;
   } catch (error) {
-    // Catch specific Firebase Admin errors if needed
     if ((error as any).code === 'auth/session-cookie-expired' || (error as any).code === 'auth/id-token-expired') {
         console.log('Session cookie expired.');
     } else {
-        console.error('Error verifying session cookie:', error);
+        console.error('Error verifying session cookie or fetching user profile:', error);
     }
     return null;
   }
@@ -58,7 +63,6 @@ async function processAndEncryptData(values: AnimeFormData) {
 
   const encryptedChapters = values.chapters.map(chapter => ({
     ...chapter,
-    // Encrypt the URL if it's not already a long hex string (i.e., encrypted)
     url: chapter.url && chapter.url.length < 100 ? encrypt(chapter.url) : chapter.url,
   }));
 
@@ -78,8 +82,6 @@ export async function addAnimeAction(values: AnimeFormData) {
 
   try {
     const submissionData = await processAndEncryptData(values);
-    // Use the client SDK for the write operation, as it's simpler
-    // The permission check has already been done
     await addDoc(collection(db, 'animes'), submissionData);
     
     revalidatePath('/admin');
@@ -87,6 +89,7 @@ export async function addAnimeAction(values: AnimeFormData) {
     
     return { success: true, message: `${values.title} has been added.` };
   } catch (error: any) {
+    console.error('Error in addAnimeAction:', error);
     return { success: false, message: `Error adding anime: ${error.message}` };
   }
 }
@@ -99,7 +102,6 @@ export async function updateAnimeAction(id: string, values: AnimeFormData) {
   
   try {
     const submissionData = await processAndEncryptData(values);
-    // Use the client SDK for the write operation
     const docRef = doc(db, 'animes', id);
     await updateDoc(docRef, submissionData);
 
@@ -110,6 +112,7 @@ export async function updateAnimeAction(id: string, values: AnimeFormData) {
 
     return { success: true, message: `${values.title} has been updated.` };
   } catch (error: any) {
+    console.error('Error in updateAnimeAction:', error);
     return { success: false, message: `Error updating anime: ${error.message}` };
   }
 }
