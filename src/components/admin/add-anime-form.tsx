@@ -19,14 +19,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useToast } from "@/lib/hooks/use-toast";
 import { Loader2, PlusCircle, Trash2 } from "lucide-react";
-import { collection, addDoc, doc, updateDoc } from "firebase/firestore";
-import { db } from "@/lib/firebase";
 import { Separator } from "../ui/separator";
 import type { Anime } from "@/lib/types";
+import { addAnimeAction, updateAnimeAction } from "@/app/admin/actions";
 
 const chapterSchema = z.object({
   title: z.string().optional(),
-  url: z.string().url({ message: "Por favor, introduce una URL válida." }),
+  url: z.string().min(1, { message: "URL cannot be empty." }),
 });
 
 const formSchema = z.object({
@@ -81,37 +80,27 @@ export function AddAnimeForm({ animeToEdit, onSuccess }: AddAnimeFormProps) {
   const isEditMode = !!animeToEdit;
 
   async function onSubmit(values: FormData) {
-    try {
-      const genresArray = values.genres.split(',').map(g => g.trim());
-      const submissionData = {
-        ...values,
-        bannerImage: values.bannerImage || `https://placehold.co/1200x400.png`,
-        genres: genresArray,
-      };
+    let result;
+    if (isEditMode) {
+      result = await updateAnimeAction(animeToEdit.id, values);
+    } else {
+      result = await addAnimeAction(values);
+    }
 
-      if (isEditMode) {
-        const docRef = doc(db, "animes", animeToEdit.id);
-        await updateDoc(docRef, submissionData);
-        toast({
-          title: "Contenido Actualizado",
-          description: `${values.title} ha sido actualizado correctamente.`,
-        });
-      } else {
-        await addDoc(collection(db, "animes"), submissionData);
-        toast({
-          title: "Contenido Agregado",
-          description: `${values.title} ha sido agregado al catálogo.`,
-        });
+    if (result.success) {
+      toast({
+        title: isEditMode ? "Contenido Actualizado" : "Contenido Agregado",
+        description: result.message,
+      });
+      if (!isEditMode) {
         form.reset();
       }
-      
       if (onSuccess) onSuccess();
-
-    } catch (error: any) {
+    } else {
       toast({
         variant: "destructive",
         title: isEditMode ? "Error al actualizar" : "Error al agregar",
-        description: error.message,
+        description: result.message,
       });
     }
   }
@@ -291,7 +280,7 @@ export function AddAnimeForm({ animeToEdit, onSuccess }: AddAnimeFormProps) {
                           <FormItem>
                             <FormLabel>Link del Capítulo {index + 1}</FormLabel>
                             <FormControl>
-                              <Input {...field} placeholder="https://..." />
+                              <Input {...field} placeholder="https://... (será encriptado)" />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
