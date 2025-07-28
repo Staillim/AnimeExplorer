@@ -66,6 +66,7 @@ export function SignupForm({ onSuccess }: SignupFormProps) {
         displayName: values.displayName,
         email: user.email,
         watchedAnimes: [],
+        role: 'user',
       });
       
       toast({
@@ -93,7 +94,8 @@ export function SignupForm({ onSuccess }: SignupFormProps) {
         displayName: user.displayName,
         email: user.email,
         watchedAnimes: [],
-      }, { merge: true }); // Merge to avoid overwriting watchedAnimes if user already exists
+        role: 'user',
+      }, { merge: true }); // Merge to avoid overwriting existing data
 
       toast({
         title: "Login Successful",

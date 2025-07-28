@@ -1,19 +1,34 @@
 import Image from 'next/image';
 import { notFound } from 'next/navigation';
-import { animes } from '@/lib/data';
+import { doc, getDoc, collection, getDocs } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+import type { Anime } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
 import { Star, Calendar } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 
 export async function generateStaticParams() {
-  return animes.map((anime) => ({
-    id: anime.id,
-  }));
+  const animesCollection = collection(db, 'animes');
+  const animeSnapshot = await getDocs(animesCollection);
+  const animes = animeSnapshot.docs.map(doc => ({ id: doc.id }));
+  return animes;
 }
 
+async function getAnime(id: string): Promise<Anime | null> {
+    const docRef = doc(db, 'animes', id);
+    const docSnap = await getDoc(docRef);
+
+    if (docSnap.exists()) {
+        return { id: docSnap.id, ...docSnap.data() } as Anime;
+    } else {
+        return null;
+    }
+}
+
+
 export async function generateMetadata({ params }: { params: { id: string } }) {
-    const anime = animes.find((a) => a.id === params.id);
+    const anime = await getAnime(params.id);
     if (!anime) {
         return {
             title: 'Anime Not Found'
@@ -26,8 +41,8 @@ export async function generateMetadata({ params }: { params: { id: string } }) {
 }
 
 
-export default function AnimeDetailPage({ params }: { params: { id: string } }) {
-  const anime = animes.find((a) => a.id === params.id);
+export default async function AnimeDetailPage({ params }: { params: { id: string } }) {
+  const anime = await getAnime(params.id);
 
   if (!anime) {
     notFound();

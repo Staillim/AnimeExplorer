@@ -16,6 +16,7 @@ export interface UserProfile {
   email: string | null;
   displayName: string;
   watchedAnimes: string[];
+  role?: 'admin' | 'user';
 }
 
 export interface AuthContextType {

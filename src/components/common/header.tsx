@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Clapperboard, Home, WandSparkles, LogIn, User } from "lucide-react";
+import { Clapperboard, Home, WandSparkles, LogIn, User, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/auth-context";
 import {
@@ -15,7 +15,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 
 export default function Header() {
-  const { user, loading, logout } = useAuth();
+  const { user, userProfile, loading, logout } = useAuth();
 
   const getInitials = (name?: string | null) => {
     if (!name) return "U";
@@ -45,6 +45,14 @@ export default function Header() {
                 Recommendations
               </Link>
             </Button>
+             {userProfile?.role === 'admin' && (
+              <Button asChild variant="ghost">
+                <Link href="/admin">
+                  <ShieldCheck className="h-4 w-4 mr-2" />
+                  Admin
+                </Link>
+              </Button>
+            )}
             <div className="w-px h-6 bg-border mx-2" />
             {loading ? (
               <div className="w-8 h-8 bg-muted rounded-full animate-pulse" />

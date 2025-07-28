@@ -26,6 +26,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         email: firebaseUser.email,
         displayName: firebaseUser.displayName || 'New User',
         watchedAnimes: [],
+        role: 'user', // Default role
       };
       await setDoc(userDocRef, newProfile);
       setUserProfile(newProfile);
