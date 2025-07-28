@@ -124,10 +124,8 @@ export default async function AnimeDetailPage({ params }: { params: { id: string
               <ScrollArea className="h-[400px]">
                 <CardContent className="p-4 space-y-2">
                   {anime.chapters.map((chapter, index) => (
-                    <a 
-                      href={chapter.url} 
-                      target="_blank" 
-                      rel="noopener noreferrer" 
+                    <Link 
+                      href={`/play/${anime.id}/${index}`}
                       key={index}
                       className="flex items-center p-3 rounded-lg hover:bg-secondary transition-colors group"
                     >
@@ -139,7 +137,7 @@ export default async function AnimeDetailPage({ params }: { params: { id: string
                          <span className="text-sm text-muted-foreground">Reproducir ahora</span>
                       </div>
                       <LinkIcon className="ml-auto w-5 h-5 text-muted-foreground group-hover:text-accent transition-colors"/>
-                    </a>
+                    </Link>
                   ))}
                 </CardContent>
               </ScrollArea>
