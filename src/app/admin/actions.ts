@@ -1,3 +1,4 @@
+
 'use server';
 
 import { revalidatePath } from 'next/cache';
@@ -7,6 +8,7 @@ import { encrypt } from '@/lib/crypto';
 import type { Anime, UserProfile } from '@/lib/types';
 import { cookies } from 'next/headers';
 import { getAuth } from 'firebase-admin/auth';
+import { getFirestore } from 'firebase-admin/firestore';
 import { adminApp } from '@/lib/firebase-admin';
 
 // This is a partial type, as the full form data has genres as a string.
@@ -22,16 +24,31 @@ async function getAdminUserProfile(): Promise<UserProfile | null> {
     if (!sessionCookie) {
       return null;
     }
-    const decodedToken = await getAuth(adminApp).verifySessionCookie(sessionCookie, true);
-    const userDocRef = doc(db, 'users', decodedToken.uid);
-    const userDocSnap = await getDoc(userDocRef);
+    
+    // Ensure adminApp is initialized before using getAuth
+    if (!adminApp) {
+        console.error("Firebase Admin SDK not initialized.");
+        return null;
+    }
 
-    if (userDocSnap.exists() && (userDocSnap.data() as UserProfile).role === 'admin') {
+    const decodedToken = await getAuth(adminApp).verifySessionCookie(sessionCookie, true);
+    
+    // Use the Admin SDK to fetch the user document
+    const adminDb = getFirestore(adminApp);
+    const userDocRef = adminDb.collection('users').doc(decodedToken.uid);
+    const userDocSnap = await userDocRef.get();
+
+    if (userDocSnap.exists && (userDocSnap.data() as UserProfile).role === 'admin') {
       return userDocSnap.data() as UserProfile;
     }
     return null;
   } catch (error) {
-    console.error('Error verifying session cookie:', error);
+    // Catch specific Firebase Admin errors if needed
+    if ((error as any).code === 'auth/session-cookie-expired' || (error as any).code === 'auth/id-token-expired') {
+        console.log('Session cookie expired.');
+    } else {
+        console.error('Error verifying session cookie:', error);
+    }
     return null;
   }
 }
@@ -61,6 +78,8 @@ export async function addAnimeAction(values: AnimeFormData) {
 
   try {
     const submissionData = await processAndEncryptData(values);
+    // Use the client SDK for the write operation, as it's simpler
+    // The permission check has already been done
     await addDoc(collection(db, 'animes'), submissionData);
     
     revalidatePath('/admin');
@@ -80,6 +99,7 @@ export async function updateAnimeAction(id: string, values: AnimeFormData) {
   
   try {
     const submissionData = await processAndEncryptData(values);
+    // Use the client SDK for the write operation
     const docRef = doc(db, 'animes', id);
     await updateDoc(docRef, submissionData);
 
