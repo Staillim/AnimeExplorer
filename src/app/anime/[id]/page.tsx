@@ -4,12 +4,12 @@
 import { useState, useEffect, useCallback } from 'react';
 import Image from 'next/image';
 import { notFound, useParams } from 'next/navigation';
-import { doc, getDoc, updateDoc, arrayUnion } from 'firebase/firestore';
+import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import type { Anime, UserProfile } from '@/lib/types';
+import type { Anime } from '@/lib/types';
 import { useAuth } from '@/context/auth-context';
 import { Badge } from '@/components/ui/badge';
-import { Star, Calendar, Tv, PlayCircle, Link as LinkIcon, Loader2 } from 'lucide-react';
+import { Star, Calendar, Tv, PlayCircle, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 
@@ -59,7 +59,6 @@ export default function AnimeDetailPage() {
         getAnime(animeId).then(animeData => {
             if (animeData) {
                 setAnime(animeData);
-                // Check for watch progress after anime data is loaded
                 if (userProfile?.watchProgress && userProfile.watchProgress[animeId] !== undefined) {
                     const lastWatchedIndex = userProfile.watchProgress[animeId];
                     if(lastWatchedIndex < animeData.chapters.length) {
@@ -95,24 +94,11 @@ export default function AnimeDetailPage() {
 
     return (
         <div className="w-full space-y-12">
-            {/* Encabezado del Anime */}
-            <div className="relative w-full h-[40vh] md:h-[50vh] lg:h-[60vh] -mt-8 -mx-4 sm:-mx-6 lg:-mx-8">
-                <Image
-                    src={anime.bannerImage || anime.coverImage}
-                    alt={`Banner of ${anime.title}`}
-                    fill
-                    className="object-cover"
-                    priority
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-background via-background/70 to-transparent" />
-                <div className="absolute inset-0 bg-gradient-to-r from-background via-background/20 to-transparent" />
-            </div>
-            
-            <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="grid md:grid-cols-12 gap-8 -mt-32 md:-mt-48">
+            <div className="container mx-auto px-4 sm:px-6 lg:px-8 pt-8">
+                <div className="grid md:grid-cols-12 gap-8">
                     {/* Columna de Portada */}
-                    <div className="md:col-span-4 lg:col-span-3 z-10">
-                        <div className="relative aspect-[2/3] w-full max-w-sm mx-auto rounded-lg overflow-hidden shadow-2xl shadow-black/50 border-4 border-card/50">
+                    <div className="md:col-span-4 lg:col-span-3">
+                        <div className="relative aspect-[2/3] w-full max-w-xs mx-auto rounded-lg overflow-hidden shadow-2xl shadow-black/50 border-4 border-card/50">
                             <Image
                                 src={anime.coverImage}
                                 alt={`Cover of ${anime.title}`}
@@ -123,9 +109,9 @@ export default function AnimeDetailPage() {
                         </div>
                     </div>
                     {/* Columna de Información */}
-                    <div className="md:col-span-8 lg:col-span-9 space-y-6 pt-0 md:pt-52">
+                    <div className="md:col-span-8 lg:col-span-9 space-y-6">
                         <div className="space-y-4">
-                            <h1 className="text-4xl lg:text-6xl font-bold font-headline text-primary-foreground drop-shadow-lg">{anime.title}</h1>
+                            <h1 className="text-4xl lg:text-5xl font-bold font-headline text-primary-foreground drop-shadow-lg">{anime.title}</h1>
                             <div className="flex items-center flex-wrap gap-x-4 gap-y-2 text-muted-foreground">
                                 <div className="flex items-center gap-1.5 text-amber-400">
                                     <Star className="w-5 h-5 fill-current" />
