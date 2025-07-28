@@ -2,7 +2,7 @@
 "use client";
 
 import { useEffect, useState } from 'react';
-import { useRouter, notFound } from 'next/navigation';
+import { useRouter, notFound, useParams } from 'next/navigation';
 import { useAuth } from '@/context/auth-context';
 import { AddAnimeForm } from '@/components/admin/add-anime-form';
 import { Loader2 } from 'lucide-react';
@@ -24,7 +24,9 @@ async function getAnime(id: string): Promise<Anime | null> {
   }
 }
 
-export default function EditAnimePage({ params: { id } }: { params: { id: string } }) {
+export default function EditAnimePage() {
+  const params = useParams();
+  const id = Array.isArray(params.id) ? params.id[0] : params.id;
   const { userProfile, loading: authLoading } = useAuth();
   const router = useRouter();
   const [isAuthorized, setIsAuthorized] = useState(false);
@@ -42,7 +44,7 @@ export default function EditAnimePage({ params: { id } }: { params: { id: string
   }, [userProfile, authLoading, router]);
 
   useEffect(() => {
-    if (!isAuthorized) return;
+    if (!isAuthorized || !id) return;
 
     getAnime(id)
       .then(data => {
