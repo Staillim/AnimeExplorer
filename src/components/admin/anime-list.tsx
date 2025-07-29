@@ -30,6 +30,7 @@ import {
 import { useToast } from "@/lib/hooks/use-toast";
 import { doc, deleteDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import { Badge } from '../ui/badge';
 
 interface AnimeListProps {
   animes: Anime[];
@@ -67,62 +68,79 @@ export function AnimeList({ animes }: AnimeListProps) {
             <TableHead>Título</TableHead>
             <TableHead>Año</TableHead>
             <TableHead>Rating</TableHead>
+            <TableHead>Temporadas</TableHead>
             <TableHead className="text-right w-[120px]">Acciones</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {animes.map((anime) => (
-            <TableRow key={anime.id}>
-              <TableCell>
-                <Image
-                  src={anime.coverImage}
-                  alt={anime.title}
-                  width={50}
-                  height={75}
-                  className="rounded-md object-cover"
-                />
-              </TableCell>
-              <TableCell className="font-medium">{anime.title}</TableCell>
-              <TableCell>{anime.year}</TableCell>
-              <TableCell>{anime.rating.toFixed(1)}</TableCell>
-              <TableCell className="text-right">
-                <div className="flex gap-2 justify-end">
-                  <Button asChild variant="ghost" size="icon">
-                     <Link href={`/admin/edit/${anime.id}`}>
-                        <Edit className="h-4 w-4" />
-                     </Link>
-                  </Button>
-                  
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive" disabled={isDeleting === anime.id}>
-                        {isDeleting === anime.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>¿Estás absolutamente seguro?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          Esta acción no se puede deshacer. Esto eliminará permanentemente
-                          el anime <span className="font-bold">"{anime.title}"</span> de la base de datos.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                        <AlertDialogAction 
-                          onClick={() => handleDelete(anime.id, anime.title)}
-                          disabled={!!isDeleting}
-                          className="bg-destructive hover:bg-destructive/90"
-                        >
-                          {isDeleting ? 'Eliminando...' : 'Sí, eliminar'}
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
-                </div>
-              </TableCell>
-            </TableRow>
-          ))}
+          {animes.map((anime) => {
+             // Fallback for old data structure
+            const seasonsCount = anime.seasons?.length || 1;
+            const languages = anime.seasons ? Array.from(new Set(anime.seasons.map(s => s.language))) : ['sub'];
+
+            return (
+              <TableRow key={anime.id}>
+                <TableCell>
+                  <Image
+                    src={anime.coverImage}
+                    alt={anime.title}
+                    width={50}
+                    height={75}
+                    className="rounded-md object-cover"
+                  />
+                </TableCell>
+                <TableCell className="font-medium">{anime.title}</TableCell>
+                <TableCell>{anime.year}</TableCell>
+                <TableCell>{anime.rating.toFixed(1)}</TableCell>
+                <TableCell>
+                    <div className="flex flex-col gap-1 items-start">
+                        <Badge variant="outline">{seasonsCount} Temporada(s)</Badge>
+                        <div className="flex gap-1">
+                         {languages.map(lang => (
+                             <Badge key={lang} variant="secondary">{lang.toUpperCase()}</Badge>
+                         ))}
+                        </div>
+                    </div>
+                </TableCell>
+                <TableCell className="text-right">
+                  <div className="flex gap-2 justify-end">
+                    <Button asChild variant="ghost" size="icon">
+                       <Link href={`/admin/edit/${anime.id}`}>
+                          <Edit className="h-4 w-4" />
+                       </Link>
+                    </Button>
+                    
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive" disabled={isDeleting === anime.id}>
+                          {isDeleting === anime.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>¿Estás absolutamente seguro?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Esta acción no se puede deshacer. Esto eliminará permanentemente
+                            el anime <span className="font-bold">"{anime.title}"</span> de la base de datos.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                          <AlertDialogAction 
+                            onClick={() => handleDelete(anime.id, anime.title)}
+                            disabled={!!isDeleting}
+                            className="bg-destructive hover:bg-destructive/90"
+                          >
+                            {isDeleting ? 'Eliminando...' : 'Sí, eliminar'}
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </div>
+                </TableCell>
+              </TableRow>
+            )
+          })}
         </TableBody>
       </Table>
     </div>

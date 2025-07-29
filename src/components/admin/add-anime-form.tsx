@@ -23,6 +23,7 @@ import { Separator } from "../ui/separator";
 import type { Anime } from "@/lib/types";
 import { collection, addDoc, doc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 
 
 const chapterSchema = z.object({
@@ -30,16 +31,21 @@ const chapterSchema = z.object({
   url: z.string().url({ message: "Por favor, introduce una URL válida." }),
 });
 
+const seasonSchema = z.object({
+  title: z.string().min(1, { message: "El título de la temporada es obligatorio."}),
+  language: z.enum(['sub', 'latino']),
+  chapters: z.array(chapterSchema).min(1, { message: "Debes agregar al menos un capítulo." }),
+});
+
 const formSchema = z.object({
   title: z.string().min(1, { message: "El título es obligatorio." }),
-  season: z.string().min(1, { message: "La temporada o tipo es obligatoria." }),
   year: z.coerce.number().int().min(1900).max(new Date().getFullYear() + 5),
   coverImage: z.string().url({ message: "Por favor, introduce una URL de imagen de portada válida." }),
   bannerImage: z.string().url({ message: "Por favor, introduce una URL de imagen de banner válida." }).optional().or(z.literal('')),
   description: z.string().min(10, { message: "La descripción debe tener al menos 10 caracteres." }),
   genres: z.string().min(1, { message: "Introduce al menos un género." }),
   rating: z.coerce.number().min(0).max(10),
-  chapters: z.array(chapterSchema).min(1, { message: "Debes agregar al menos un capítulo." }),
+  seasons: z.array(seasonSchema).min(1, { message: "Debes agregar al menos una temporada."}),
   dataAiHint: z.string().min(2, { message: "AI hint must be at least 2 characters." }),
 });
 
@@ -61,21 +67,20 @@ export function AddAnimeForm({ animeToEdit, onSuccess }: AddAnimeFormProps) {
         }
       : {
           title: "",
-          season: "",
           year: new Date().getFullYear(),
           coverImage: "",
           bannerImage: "",
           description: "",
           genres: "",
           rating: 7.0,
-          chapters: [{ title: "Capítulo 1", url: "" }],
+          seasons: [{ title: "Temporada 1", language: 'sub', chapters: [{ title: "Capítulo 1", url: "" }] }],
           dataAiHint: "anime",
         },
   });
 
-  const { fields, append, remove } = useFieldArray({
+  const { fields: seasonFields, append: appendSeason, remove: removeSeason } = useFieldArray({
     control: form.control,
-    name: "chapters",
+    name: "seasons",
   });
 
   const { isSubmitting } = form.formState;
@@ -146,12 +151,12 @@ export function AddAnimeForm({ animeToEdit, onSuccess }: AddAnimeFormProps) {
               />
               <FormField
                 control={form.control}
-                name="season"
+                name="year"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Temporada / Tipo</FormLabel>
+                    <FormLabel>Año</FormLabel>
                     <FormControl>
-                      <Input placeholder="Temporada 1, Película, OVA" {...field} />
+                      <Input type="number" placeholder="2023" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -220,7 +225,7 @@ export function AddAnimeForm({ animeToEdit, onSuccess }: AddAnimeFormProps) {
               )}
             />
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                <FormField
                 control={form.control}
                 name="genres"
@@ -231,19 +236,6 @@ export function AddAnimeForm({ animeToEdit, onSuccess }: AddAnimeFormProps) {
                       <Input placeholder="Acción, Fantasía" {...field} />
                     </FormControl>
                      <FormDescription>Separados por comas.</FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="year"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Año</FormLabel>
-                    <FormControl>
-                      <Input type="number" placeholder="2023" {...field} />
-                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -264,72 +256,40 @@ export function AddAnimeForm({ animeToEdit, onSuccess }: AddAnimeFormProps) {
             </div>
 
             <Separator />
-
+            
             <div>
-              <h3 className="text-lg font-medium mb-4">Capítulos</h3>
-              <div className="space-y-4">
-                {fields.map((field, index) => (
-                  <div key={field.id} className="flex items-end gap-4 p-4 border rounded-lg">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 flex-grow">
-                      <FormField
-                        control={form.control}
-                        name={`chapters.${index}.title`}
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Título del Capítulo {index + 1} (Opcional)</FormLabel>
-                            <FormControl>
-                              <Input {...field} placeholder={`Capítulo ${index + 1}`} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                       <FormField
-                        control={form.control}
-                        name={`chapters.${index}.url`}
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Link del Capítulo {index + 1}</FormLabel>
-                            <FormControl>
-                              <Input {...field} placeholder="https://..." />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-                     <Button
-                      type="button"
-                      variant="destructive"
-                      size="icon"
-                      onClick={() => remove(index)}
-                      disabled={fields.length <= 1}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
+              <h3 className="text-lg font-medium mb-4">Temporadas</h3>
+              <div className="space-y-6">
+                {seasonFields.map((season, seasonIndex) => (
+                  <SeasonField
+                    key={season.id}
+                    seasonIndex={seasonIndex}
+                    removeSeason={removeSeason}
+                    totalSeasons={seasonFields.length}
+                  />
                 ))}
               </div>
-               <Button
+              <Button
                 type="button"
                 variant="outline"
                 size="sm"
-                className="mt-4"
-                onClick={() => append({ title: `Capítulo ${fields.length + 1}`, url: "" })}
+                className="mt-6"
+                onClick={() => appendSeason({ title: `Temporada ${seasonFields.length + 1}`, language: "sub", chapters: [{ title: "Capítulo 1", url: ""}] })}
               >
                 <PlusCircle className="mr-2 h-4 w-4" />
-                Agregar otro capítulo
+                Agregar Temporada
               </Button>
-               <FormField
-                  control={form.control}
-                  name="chapters"
-                  render={() => (
-                     <FormItem>
-                       <FormMessage className="mt-2" />
-                     </FormItem>
-                  )}
-                />
+              <FormField
+                control={form.control}
+                name="seasons"
+                render={() => (
+                   <FormItem>
+                     <FormMessage className="mt-2" />
+                   </FormItem>
+                )}
+              />
             </div>
+
           </CardContent>
           <CardFooter>
             <Button type="submit" disabled={isSubmitting} className="w-full" size="lg">
@@ -340,5 +300,121 @@ export function AddAnimeForm({ animeToEdit, onSuccess }: AddAnimeFormProps) {
         </form>
       </Form>
     </Card>
+  );
+}
+
+
+function SeasonField({ seasonIndex, removeSeason, totalSeasons }: { seasonIndex: number, removeSeason: (index: number) => void, totalSeasons: number }) {
+  const { control } = useFormContext<FormData>();
+
+  const { fields, append, remove } = useFieldArray({
+    control,
+    name: `seasons.${seasonIndex}.chapters`,
+  });
+
+  return (
+    <div className="p-4 border rounded-lg bg-secondary/20 relative">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+        <FormField
+          control={control}
+          name={`seasons.${seasonIndex}.title`}
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Título de la Temporada</FormLabel>
+              <FormControl><Input {...field} /></FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={control}
+          name={`seasons.${seasonIndex}.language`}
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Idioma</FormLabel>
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecciona un idioma" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  <SelectItem value="sub">Subtitulado</SelectItem>
+                  <SelectItem value="latino">Latino</SelectItem>
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      </div>
+
+      <h4 className="text-md font-medium mb-2">Capítulos</h4>
+      <div className="space-y-3">
+        {fields.map((chapter, chapterIndex) => (
+          <div key={chapter.id} className="flex items-end gap-2">
+            <FormField
+              control={control}
+              name={`seasons.${seasonIndex}.chapters.${chapterIndex}.title`}
+              render={({ field }) => (
+                <FormItem className="flex-grow">
+                  <FormControl><Input {...field} placeholder={`Título del Cap. ${chapterIndex + 1}`} /></FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={control}
+              name={`seasons.${seasonIndex}.chapters.${chapterIndex}.url`}
+              render={({ field }) => (
+                <FormItem className="flex-grow">
+                  <FormControl><Input {...field} placeholder="https://..." /></FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              onClick={() => remove(chapterIndex)}
+              disabled={fields.length <= 1}
+            >
+              <Trash2 className="h-4 w-4 text-destructive" />
+            </Button>
+          </div>
+        ))}
+      </div>
+       <Button
+        type="button"
+        variant="ghost"
+        size="sm"
+        className="mt-3"
+        onClick={() => append({ title: `Capítulo ${fields.length + 1}`, url: "" })}
+      >
+        <PlusCircle className="mr-2 h-4 w-4" />
+        Agregar Capítulo
+      </Button>
+       <FormField
+          control={control}
+          name={`seasons.${seasonIndex}.chapters`}
+          render={() => (
+             <FormItem>
+               <FormMessage className="mt-2" />
+             </FormItem>
+          )}
+        />
+      
+      <Button
+        type="button"
+        variant="destructive"
+        size="icon"
+        className="absolute top-2 right-2"
+        onClick={() => removeSeason(seasonIndex)}
+        disabled={totalSeasons <= 1}
+      >
+        <Trash2 className="h-4 w-4" />
+      </Button>
+    </div>
   );
 }

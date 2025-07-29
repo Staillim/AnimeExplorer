@@ -49,6 +49,11 @@ export default function EditAnimePage() {
     getAnime(id)
       .then(data => {
         if (data) {
+          // Ensure seasons exist to avoid breaking the form
+          if (!data.seasons) {
+            // @ts-ignore - backward compatibility
+            data.seasons = [{ title: data.season || "Temporada 1", language: 'sub', chapters: data.chapters || [] }];
+          }
           setAnime(data);
         } else {
           notFound();

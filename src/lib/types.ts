@@ -6,6 +6,12 @@ export interface Chapter {
   url: string;
 }
 
+export interface Season {
+  title: string;
+  language: 'sub' | 'latino';
+  chapters: Chapter[];
+}
+
 export interface Anime {
   id: string;
   title: string;
@@ -16,8 +22,7 @@ export interface Anime {
   genres: string[];
   year: number;
   rating: number;
-  season: string;
-  chapters: Chapter[];
+  seasons: Season[];
 }
 
 export interface Ad {
@@ -32,7 +37,10 @@ export interface UserProfile {
   watchedAnimes: string[];
   role?: 'admin' | 'user';
   watchProgress?: {
-    [animeId: string]: number; // chapterIndex
+    [animeId: string]: {
+      seasonIndex: number;
+      chapterIndex: number;
+    }
   };
 }
 

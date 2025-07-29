@@ -6,13 +6,14 @@ import Image from 'next/image';
 import { notFound, useParams } from 'next/navigation';
 import { doc, getDoc, updateDoc, getDocs, collection } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import type { Anime, Ad } from '@/lib/types';
+import type { Anime, Ad, Season } from '@/lib/types';
 import { useAuth } from '@/context/auth-context';
 import { Badge } from '@/components/ui/badge';
 import { Star, Calendar, Tv, PlayCircle, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import PlayerAdOverlay from '@/components/player-ad-overlay';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 async function getAnime(id: string): Promise<Anime | null> {
     const docRef = doc(db, 'animes', id);
@@ -39,8 +40,12 @@ export default function AnimeDetailPage() {
     const [anime, setAnime] = useState<Anime | null>(null);
     const [ads, setAds] = useState<Ad[]>([]);
     const [loading, setLoading] = useState(true);
+    const [selectedSeasonIndex, setSelectedSeasonIndex] = useState(0);
     const [selectedChapterIndex, setSelectedChapterIndex] = useState(0);
     const [isPlayerLocked, setIsPlayerLocked] = useState(true);
+    
+    const selectedSeason = anime?.seasons[selectedSeasonIndex];
+    const selectedChapter = selectedSeason?.chapters[selectedChapterIndex];
 
     const randomAd = useMemo(() => {
         if (ads.length === 0) return null;
@@ -48,7 +53,7 @@ export default function AnimeDetailPage() {
         return ads[randomIndex];
     }, [ads]);
 
-    const updateUserWatchHistory = useCallback(async (newChapterIndex: number) => {
+    const updateUserWatchHistory = useCallback(async (newSeasonIndex: number, newChapterIndex: number) => {
         if (!user || !animeId) return;
 
         const userDocRef = doc(db, "users", user.uid);
@@ -56,7 +61,10 @@ export default function AnimeDetailPage() {
 
         try {
             await updateDoc(userDocRef, {
-                [progressKey]: newChapterIndex
+                [progressKey]: {
+                  seasonIndex: newSeasonIndex,
+                  chapterIndex: newChapterIndex
+                }
             });
             await refetchUserProfile();
         } catch (error) {
@@ -80,9 +88,10 @@ export default function AnimeDetailPage() {
                 setAnime(animeData);
                 setAds(adsData);
                 if (userProfile?.watchProgress && userProfile.watchProgress[animeId] !== undefined) {
-                    const lastWatchedIndex = userProfile.watchProgress[animeId];
-                    if(lastWatchedIndex < animeData.chapters.length) {
-                       setSelectedChapterIndex(lastWatchedIndex);
+                    const { seasonIndex: lastSeason, chapterIndex: lastChapter } = userProfile.watchProgress[animeId];
+                    if(lastSeason < animeData.seasons.length && lastChapter < animeData.seasons[lastSeason].chapters.length) {
+                       setSelectedSeasonIndex(lastSeason);
+                       setSelectedChapterIndex(lastChapter);
                     }
                 }
             } else {
@@ -96,12 +105,22 @@ export default function AnimeDetailPage() {
         });
     }, [animeId, userProfile]);
 
-    const handleChapterSelect = (index: number) => {
-        setSelectedChapterIndex(index);
-        setIsPlayerLocked(true); // Lock the player for the new chapter
+    const handleChapterSelect = (chapterIndex: number) => {
+        setSelectedChapterIndex(chapterIndex);
+        setIsPlayerLocked(true); 
         if (user) {
-            updateUserWatchHistory(index);
+            updateUserWatchHistory(selectedSeasonIndex, chapterIndex);
         }
+    };
+
+    const handleSeasonSelect = (seasonIndex: number) => {
+      setSelectedSeasonIndex(seasonIndex);
+      // Reset to first chapter of the new season and lock player
+      setSelectedChapterIndex(0);
+      setIsPlayerLocked(true);
+      if (user) {
+        updateUserWatchHistory(seasonIndex, 0);
+      }
     };
     
     const handleAdComplete = () => {
@@ -120,8 +139,6 @@ export default function AnimeDetailPage() {
         return notFound();
     }
     
-    const selectedChapter = anime.chapters[selectedChapterIndex];
-
     return (
         <div className="w-full space-y-12">
             <div className="container mx-auto px-4 sm:px-6 lg:px-8 pt-8">
@@ -149,7 +166,7 @@ export default function AnimeDetailPage() {
                                 </div>
                                 <div className="flex items-center gap-1.5">
                                     <Tv className="w-4 h-4" />
-                                    <span>{anime.season}</span>
+                                    <span>{anime.seasons.length} Temporada(s)</span>
                                 </div>
                                 <div className="flex items-center gap-1.5">
                                     <Calendar className="w-4 h-4" />
@@ -172,13 +189,29 @@ export default function AnimeDetailPage() {
             </div>
 
             {/* Reproductor y Lista de Capítulos */}
-            {anime.chapters && anime.chapters.length > 0 && selectedChapter && (
+            {selectedChapter && selectedSeason && (
                 <div className="container mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
                     {/* Reproductor de Video */}
                     <div className="space-y-4">
-                        <h2 className="text-2xl font-bold font-headline text-primary">
-                            Viendo: {selectedChapter.title || `Capítulo ${selectedChapterIndex + 1}`}
-                        </h2>
+                        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                           <h2 className="text-2xl font-bold font-headline text-primary">
+                                Viendo: {selectedSeason.title} - {selectedChapter.title || `Capítulo ${selectedChapterIndex + 1}`}
+                           </h2>
+                           {anime.seasons.length > 1 && (
+                              <Select onValueChange={(value) => handleSeasonSelect(Number(value))} value={String(selectedSeasonIndex)}>
+                                <SelectTrigger className="w-full md:w-[280px] bg-card border-border">
+                                  <SelectValue placeholder="Seleccionar temporada" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {anime.seasons.map((season, index) => (
+                                    <SelectItem key={index} value={String(index)}>
+                                      {season.title} ({season.language.toUpperCase()})
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                           )}
+                        </div>
                         <div className="relative aspect-video bg-black rounded-lg overflow-hidden shadow-2xl shadow-black/50">
                            { isPlayerLocked && randomAd && (
                                 <PlayerAdOverlay adUrl={randomAd.url} onComplete={handleAdComplete} />
@@ -197,9 +230,9 @@ export default function AnimeDetailPage() {
 
                     {/* Lista de Capítulos */}
                     <div className="space-y-4">
-                        <h2 className="text-3xl font-bold font-headline">Capítulos</h2>
+                        <h2 className="text-3xl font-bold font-headline">Capítulos de {selectedSeason.title} ({selectedSeason.language.toUpperCase()})</h2>
                         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                            {anime.chapters.map((chapter, index) => (
+                            {selectedSeason.chapters.map((chapter, index) => (
                                 <button
                                     key={index}
                                     onClick={() => handleChapterSelect(index)}

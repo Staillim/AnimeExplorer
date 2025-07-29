@@ -19,7 +19,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const userDocSnap = await getDoc(userDocRef);
 
     if (userDocSnap.exists()) {
-      setUserProfile(userDocSnap.data() as UserProfile);
+      const profileData = userDocSnap.data() as UserProfile;
+      // Ensure watchProgress exists
+      if (!profileData.watchProgress) {
+        profileData.watchProgress = {};
+      }
+      setUserProfile(profileData);
     } else {
       // Create a profile if it doesn't exist (e.g., for Google Sign-In)
       const newProfile: UserProfile = {
@@ -37,9 +42,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const refetchUserProfile = useCallback(async () => {
     if (user) {
-      setLoading(true);
+      // No need to set loading here, to avoid UI flashes
       await fetchUserProfile(user);
-      setLoading(false);
     }
   }, [user, fetchUserProfile]);
 
