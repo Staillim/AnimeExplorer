@@ -349,7 +349,7 @@ function SeasonField({ seasonIndex, removeSeason, totalSeasons }: { seasonIndex:
 
   return (
     <div className="p-4 border rounded-lg bg-secondary/20 relative space-y-4">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <FormField
           control={control}
           name={`seasons.${seasonIndex}.type`}
@@ -371,17 +371,19 @@ function SeasonField({ seasonIndex, removeSeason, totalSeasons }: { seasonIndex:
             </FormItem>
           )}
         />
-        <FormField
-          control={control}
-          name={`seasons.${seasonIndex}.title`}
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Título de la Versión</FormLabel>
-              <FormControl><Input {...field} placeholder={versionType === 'movie' ? 'Película Completa' : 'Temporada 1'} /></FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        {versionType === 'season' && (
+          <FormField
+            control={control}
+            name={`seasons.${seasonIndex}.title`}
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Título de la Versión</FormLabel>
+                <FormControl><Input {...field} placeholder={'Temporada 1'} /></FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        )}
         <FormField
           control={control}
           name={`seasons.${seasonIndex}.language`}
@@ -492,3 +494,5 @@ function SeasonField({ seasonIndex, removeSeason, totalSeasons }: { seasonIndex:
     </div>
   );
 }
+
+    
