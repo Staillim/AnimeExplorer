@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import Image from 'next/image';
 import { notFound, useParams } from 'next/navigation';
 import { doc, getDoc, updateDoc, getDocs, collection } from 'firebase/firestore';
@@ -14,6 +14,8 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import PlayerAdOverlay from '@/components/player-ad-overlay';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+
+const FIFTEEN_MINUTES_IN_MS = 15 * 60 * 1000;
 
 async function getAnime(id: string): Promise<Anime | null> {
     const docRef = doc(db, 'animes', id);
@@ -43,9 +45,11 @@ export default function AnimeDetailPage() {
     const [selectedSeasonIndex, setSelectedSeasonIndex] = useState(0);
     const [selectedChapterIndex, setSelectedChapterIndex] = useState(0);
     const [isPlayerLocked, setIsPlayerLocked] = useState(true);
+    const adTimerRef = useRef<NodeJS.Timeout | null>(null);
     
     const selectedSeason = anime?.seasons[selectedSeasonIndex];
     const selectedChapter = selectedSeason?.chapters[selectedChapterIndex];
+    const isMovie = selectedSeason?.type === 'movie';
 
     const randomAd = useMemo(() => {
         if (ads.length === 0) return null;
@@ -105,9 +109,38 @@ export default function AnimeDetailPage() {
         });
     }, [animeId, userProfile]);
 
+    const cleanupAdTimer = () => {
+        if (adTimerRef.current) {
+            clearTimeout(adTimerRef.current);
+            adTimerRef.current = null;
+        }
+    };
+
+    useEffect(() => {
+        // Cleanup timer on component unmount or when dependencies change
+        return () => {
+            cleanupAdTimer();
+        };
+    }, []);
+
+    useEffect(() => {
+        // If content changes, reset timer and lock player
+        cleanupAdTimer();
+        setIsPlayerLocked(true);
+    }, [selectedSeasonIndex, selectedChapterIndex]);
+
+    const handleAdComplete = () => {
+        setIsPlayerLocked(false);
+        if (isMovie) {
+            // If it's a movie, start the 15-minute timer to re-lock the player
+            adTimerRef.current = setTimeout(() => {
+                setIsPlayerLocked(true);
+            }, FIFTEEN_MINUTES_IN_MS);
+        }
+    };
+
     const handleChapterSelect = (chapterIndex: number) => {
         setSelectedChapterIndex(chapterIndex);
-        setIsPlayerLocked(true); 
         if (user) {
             updateUserWatchHistory(selectedSeasonIndex, chapterIndex);
         }
@@ -115,18 +148,12 @@ export default function AnimeDetailPage() {
 
     const handleSeasonSelect = (seasonIndex: number) => {
       setSelectedSeasonIndex(seasonIndex);
-      // Reset to first chapter of the new season and lock player
       setSelectedChapterIndex(0);
-      setIsPlayerLocked(true);
       if (user) {
         updateUserWatchHistory(seasonIndex, 0);
       }
     };
     
-    const handleAdComplete = () => {
-        setIsPlayerLocked(false);
-    };
-
     if (loading) {
         return (
             <div className="flex justify-center items-center h-96">
