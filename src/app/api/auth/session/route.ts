@@ -27,7 +27,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ status: 'success' });
   } catch (error) {
     console.error('Session cookie creation failed:', error);
-    return NextResponse.json({ status: 'error', message: `Failed to create session: ${error}` }, { status: 401 });
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+    return NextResponse.json({ status: 'error', message: `Failed to create session: ${errorMessage}` }, { status: 401 });
   }
 }
 
@@ -37,6 +38,7 @@ export async function DELETE() {
     return NextResponse.json({ status: 'success' });
   } catch (error) {
     console.error('Session cookie deletion failed:', error);
-    return NextResponse.json({ status: 'error', message: 'Failed to delete session' }, { status: 500 });
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+    return NextResponse.json({ status: 'error', message: `Failed to delete session: ${errorMessage}` }, { status: 500 });
   }
 }
