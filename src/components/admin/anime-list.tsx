@@ -27,9 +27,8 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { doc, deleteDoc } from "firebase/firestore";
-import { db } from "@/lib/firebase";
 import { useToast } from "@/lib/hooks/use-toast";
+import { deleteAnimeAction } from '@/app/admin/actions';
 
 interface AnimeListProps {
   animes: Anime[];
@@ -37,25 +36,24 @@ interface AnimeListProps {
 
 export function AnimeList({ animes }: AnimeListProps) {
   const { toast } = useToast();
-  const [isDeleting, setIsDeleting] = useState(false);
+  const [isDeleting, setIsDeleting] = useState<string | null>(null);
 
   const handleDelete = async (animeId: string, animeTitle: string) => {
-    setIsDeleting(true);
-    try {
-      await deleteDoc(doc(db, "animes", animeId));
+    setIsDeleting(animeId);
+    const result = await deleteAnimeAction(animeId);
+    if (result.success) {
       toast({
         title: "Contenido Eliminado",
         description: `"${animeTitle}" ha sido eliminado del catálogo.`,
       });
-    } catch (error: any) {
+    } else {
       toast({
         variant: "destructive",
         title: "Error al eliminar",
-        description: error.message,
+        description: result.message,
       });
-    } finally {
-      setIsDeleting(false);
     }
+    setIsDeleting(null);
   };
 
   return (
@@ -96,8 +94,8 @@ export function AnimeList({ animes }: AnimeListProps) {
                   
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
-                      <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
-                        <Trash2 className="h-4 w-4" />
+                      <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive" disabled={isDeleting === anime.id}>
+                        {isDeleting === anime.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
                       </Button>
                     </AlertDialogTrigger>
                     <AlertDialogContent>
@@ -112,7 +110,7 @@ export function AnimeList({ animes }: AnimeListProps) {
                         <AlertDialogCancel>Cancelar</AlertDialogCancel>
                         <AlertDialogAction 
                           onClick={() => handleDelete(anime.id, anime.title)}
-                          disabled={isDeleting}
+                          disabled={!!isDeleting}
                           className="bg-destructive hover:bg-destructive/90"
                         >
                           {isDeleting ? 'Eliminando...' : 'Sí, eliminar'}
