@@ -2,7 +2,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { collection, addDoc, doc, updateDoc, getDoc } from 'firebase/firestore';
+import { collection, addDoc, doc, updateDoc, deleteDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { encrypt } from '@/lib/crypto';
 import type { Anime, UserProfile } from '@/lib/types';
@@ -115,4 +115,41 @@ export async function updateAnimeAction(id: string, values: AnimeFormData) {
     console.error('Error in updateAnimeAction:', error);
     return { success: false, message: `Error updating anime: ${error.message}` };
   }
+}
+
+
+export async function addAdAction(url: string) {
+    const adminUser = await getAdminUserProfile();
+    if (!adminUser) {
+        return { success: false, message: 'Permission denied. You must be an administrator.' };
+    }
+
+    if (!url || !/^https:/i.test(url)) {
+        return { success: false, message: 'Invalid ad URL provided.' };
+    }
+
+    try {
+        await addDoc(collection(db, 'ads'), { url });
+        revalidatePath('/admin');
+        return { success: true, message: 'Ad has been added.' };
+    } catch (error: any) {
+        console.error('Error in addAdAction:', error);
+        return { success: false, message: `Error adding ad: ${error.message}` };
+    }
+}
+
+export async function deleteAdAction(id: string) {
+    const adminUser = await getAdminUserProfile();
+    if (!adminUser) {
+        return { success: false, message: 'Permission denied. You must be an administrator.' };
+    }
+
+    try {
+        await deleteDoc(doc(db, 'ads', id));
+        revalidatePath('/admin');
+        return { success: true, message: 'Ad has been deleted.' };
+    } catch (error: any) {
+        console.error('Error in deleteAdAction:', error);
+        return { success: false, message: `Error deleting ad: ${error.message}` };
+    }
 }

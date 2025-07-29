@@ -1,17 +1,21 @@
 
 "use client";
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import Image from 'next/image';
 import { notFound, useParams } from 'next/navigation';
-import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, collection, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import type { Anime } from '@/lib/types';
+import type { Anime, Ad } from '@/lib/types';
 import { useAuth } from '@/context/auth-context';
 import { Badge } from '@/components/ui/badge';
 import { Star, Calendar, Tv, PlayCircle, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
+import { getDecryptedUrl } from './actions';
+import PlayerAdOverlay from '@/components/player-ad-overlay';
+
+const AD_INTERVAL_MINUTES = 15;
 
 async function getAnime(id: string): Promise<Anime | null> {
     const docRef = doc(db, 'animes', id);
@@ -22,6 +26,12 @@ async function getAnime(id: string): Promise<Anime | null> {
     return null;
 }
 
+async function getAds(): Promise<Ad[]> {
+    const adsCollection = collection(db, 'ads');
+    const adSnapshot = await getDocs(adsCollection);
+    return adSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Ad));
+}
+
 export default function AnimeDetailPage() {
     const params = useParams();
     const animeId = Array.isArray(params.id) ? params.id[0] : params.id;
@@ -29,8 +39,12 @@ export default function AnimeDetailPage() {
     const { user, userProfile, refetchUserProfile } = useAuth();
     
     const [anime, setAnime] = useState<Anime | null>(null);
+    const [ads, setAds] = useState<Ad[]>([]);
     const [loading, setLoading] = useState(true);
     const [selectedChapterIndex, setSelectedChapterIndex] = useState(0);
+    const [decryptedUrl, setDecryptedUrl] = useState('');
+    const [isPlayerLocked, setIsPlayerLocked] = useState(true);
+    const [isMovie, setIsMovie] = useState(false);
 
     const updateUserWatchHistory = useCallback(async (newChapterIndex: number) => {
         if (!user || !animeId) return;
@@ -56,14 +70,17 @@ export default function AnimeDetailPage() {
             return;
         }
 
-        getAnime(animeId).then(animeData => {
+        Promise.all([getAnime(animeId), getAds()]).then(([animeData, adData]) => {
             if (animeData) {
                 setAnime(animeData);
-                if (userProfile?.watchProgress && userProfile.watchProgress[animeId] !== undefined) {
-                    const lastWatchedIndex = userProfile.watchProgress[animeId];
-                    if(lastWatchedIndex < animeData.chapters.length) {
-                       setSelectedChapterIndex(lastWatchedIndex);
-                    }
+                setAds(adData);
+                setIsMovie(animeData.chapters.length === 1 && (animeData.season.toLowerCase().includes('película') || animeData.season.toLowerCase().includes('movie')));
+
+                const lastWatchedIndex = userProfile?.watchProgress?.[animeId];
+                if (lastWatchedIndex !== undefined && lastWatchedIndex < animeData.chapters.length) {
+                    setSelectedChapterIndex(lastWatchedIndex);
+                } else {
+                    setSelectedChapterIndex(0);
                 }
             } else {
                 notFound();
@@ -73,10 +90,42 @@ export default function AnimeDetailPage() {
         });
     }, [animeId, userProfile]);
 
+    useEffect(() => {
+        if (anime && anime.chapters[selectedChapterIndex]) {
+            setIsPlayerLocked(true); // Lock player on chapter change
+            setDecryptedUrl(''); // Clear previous URL
+            getDecryptedUrl(anime.chapters[selectedChapterIndex].url)
+                .then(url => {
+                    setDecryptedUrl(url)
+                });
+        }
+    }, [anime, selectedChapterIndex]);
+
+    // Ad timer for movies
+    useEffect(() => {
+        if (!isMovie || isPlayerLocked) return;
+
+        const interval = setInterval(() => {
+            setIsPlayerLocked(true);
+        }, AD_INTERVAL_MINUTES * 60 * 1000);
+
+        return () => clearInterval(interval);
+    }, [isMovie, isPlayerLocked]);
+
     const handleChapterSelect = (index: number) => {
         setSelectedChapterIndex(index);
         updateUserWatchHistory(index);
     };
+
+    const handleAdCompleted = () => {
+        setIsPlayerLocked(false);
+    };
+
+    const randomAd = useMemo(() => {
+        if (ads.length === 0) return null;
+        const randomIndex = Math.floor(Math.random() * ads.length);
+        return ads[randomIndex];
+    }, [ads, isPlayerLocked]); // Re-calculate when lock state changes
 
     if (loading) {
         return (
@@ -149,16 +198,26 @@ export default function AnimeDetailPage() {
                         <h2 className="text-2xl font-bold font-headline text-primary">
                             Viendo: {selectedChapter.title || `Capítulo ${selectedChapterIndex + 1}`}
                         </h2>
-                        <div className="aspect-video bg-black rounded-lg overflow-hidden shadow-2xl shadow-black/50">
-                           <iframe
-                                key={selectedChapter.url}
-                                src={selectedChapter.url}
-                                title={selectedChapter.title || `Capítulo ${selectedChapterIndex + 1}`}
-                                frameBorder="0"
-                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                                allowFullScreen
-                                className="w-full h-full"
-                            ></iframe>
+                        <div className="relative aspect-video bg-black rounded-lg overflow-hidden shadow-2xl shadow-black/50">
+                           {isPlayerLocked && randomAd ? (
+                             <PlayerAdOverlay adUrl={randomAd.url} onComplete={handleAdCompleted} />
+                           ) : (
+                             decryptedUrl ? (
+                               <iframe
+                                   key={decryptedUrl}
+                                   src={decryptedUrl}
+                                   title={selectedChapter.title || `Capítulo ${selectedChapterIndex + 1}`}
+                                   frameBorder="0"
+                                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                   allowFullScreen
+                                   className="w-full h-full"
+                               ></iframe>
+                             ) : (
+                                <div className="w-full h-full flex items-center justify-center">
+                                    <Loader2 className="h-12 w-12 animate-spin text-primary" />
+                                </div>
+                             )
+                           )}
                         </div>
                     </div>
 
