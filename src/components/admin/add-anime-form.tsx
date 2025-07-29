@@ -23,7 +23,6 @@ import { Separator } from "../ui/separator";
 import type { Anime } from "@/lib/types";
 import { collection, addDoc, doc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { revalidatePath } from 'next/cache'; // This might not work as expected in client components, but we'll leave it for now
 
 
 const chapterSchema = z.object({
