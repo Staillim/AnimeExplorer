@@ -15,69 +15,60 @@ const UNLOCK_TIMER_SECONDS = 5;
 export default function PlayerAdOverlay({ adUrl, onComplete }: PlayerAdOverlayProps) {
   const [countdown, setCountdown] = useState(UNLOCK_TIMER_SECONDS);
   const [hasClickedAd, setHasClickedAd] = useState(false);
-  const [verificationFailed, setVerificationFailed] = useState(false);
-  const [adClickTimestamp, setAdClickTimestamp] = useState<number | null>(null);
   const [isCountingDown, setIsCountingDown] = useState(false);
 
-
-  const startCountdown = useCallback(() => {
-    setIsCountingDown(true);
-    const timer = setInterval(() => {
-      setCountdown((prev) => {
-        if (prev - 1 <= 0) {
-          clearInterval(timer);
-          onComplete();
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-    return () => clearInterval(timer);
-  }, [onComplete]);
-
-  const handleVisibilityChange = useCallback(() => {
-    if (document.visibilityState === 'visible' && adClickTimestamp) {
-      const timeElapsed = Date.now() - adClickTimestamp;
-      if (timeElapsed < UNLOCK_TIMER_SECONDS * 1000) {
-        // User came back too soon
-        setHasClickedAd(false);
-        setAdClickTimestamp(null);
-        setVerificationFailed(true);
-      } else {
-        // Verification successful, start the final countdown
-        setVerificationFailed(false);
-        startCountdown();
-      }
-      // Clean up timestamp after check
-      setAdClickTimestamp(null);
+  // This function will be called when the user returns to the tab
+  const handleFocus = useCallback(() => {
+    // Only start the countdown if the ad has been clicked and we are not already counting down
+    if (hasClickedAd && !isCountingDown) {
+      setIsCountingDown(true);
+      const timer = setInterval(() => {
+        setCountdown((prev) => {
+          if (prev - 1 <= 0) {
+            clearInterval(timer);
+            onComplete(); // Unlock the content
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
     }
-  }, [adClickTimestamp, startCountdown]);
-  
+  }, [hasClickedAd, isCountingDown, onComplete]);
+
   useEffect(() => {
-    document.addEventListener('visibilitychange', handleVisibilityChange);
+    // Listen for when the window or tab regains focus
+    window.addEventListener('focus', handleFocus);
+    // Also listen for visibility change as a fallback
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') {
+            handleFocus();
+        }
+    });
+
+    // Cleanup the listeners when the component unmounts
     return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', handleFocus);
+      document.removeEventListener('visibilitychange', handleFocus);
     };
-  }, [handleVisibilityChange]);
+  }, [handleFocus]);
 
 
   const handleAdClick = () => {
     window.open(adUrl, '_blank', 'noopener,noreferrer');
     setHasClickedAd(true);
-    setVerificationFailed(false);
-    setAdClickTimestamp(Date.now());
   };
-  
-  const isVerifying = hasClickedAd && adClickTimestamp !== null;
 
   return (
     <div className="absolute inset-0 bg-black/80 backdrop-blur-sm flex flex-col items-center justify-center z-10 text-white p-4 space-y-6 text-center">
       <div className="space-y-2">
         <h2 className="text-2xl md:text-3xl font-bold font-headline text-primary">Contenido Bloqueado</h2>
         <p className="text-base md:text-lg text-muted-foreground max-w-md">
-          {isCountingDown && `¡Gracias! Desbloqueando en ${countdown} segundos...`}
-          {isVerifying && 'Verificando... Por favor, permanece en la página del anuncio al menos 5 segundos.'}
-          {!hasClickedAd && !isCountingDown && 'Haz clic en el anuncio y espera 5 segundos en esa página para desbloquear el contenido.'}
+          {isCountingDown 
+            ? `¡Gracias! Desbloqueando en ${countdown} segundos...`
+            : hasClickedAd 
+            ? 'Regresa a esta pestaña para iniciar el desbloqueo.'
+            : 'Haz clic en el anuncio para poder desbloquear el contenido.'
+          }
         </p>
       </div>
 
@@ -86,13 +77,6 @@ export default function PlayerAdOverlay({ adUrl, onComplete }: PlayerAdOverlayPr
           <Hourglass className="mr-2" />
           Visitar Anuncio para Desbloquear
         </Button>
-      )}
-      
-      {verificationFailed && !isCountingDown && (
-         <p className="flex items-center gap-2 text-yellow-400">
-          <AlertTriangle className="h-5 w-5" />
-          Has vuelto muy rápido. Por favor, inténtalo de nuevo.
-        </p>
       )}
 
       {isCountingDown && (
