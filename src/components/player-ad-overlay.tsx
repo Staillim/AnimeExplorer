@@ -17,8 +17,11 @@ export default function PlayerAdOverlay({ adUrl, onComplete }: PlayerAdOverlayPr
   const [hasClickedAd, setHasClickedAd] = useState(false);
   const [verificationFailed, setVerificationFailed] = useState(false);
   const [adClickTimestamp, setAdClickTimestamp] = useState<number | null>(null);
+  const [isCountingDown, setIsCountingDown] = useState(false);
+
 
   const startCountdown = useCallback(() => {
+    setIsCountingDown(true);
     const timer = setInterval(() => {
       setCountdown((prev) => {
         if (prev - 1 <= 0) {
@@ -42,6 +45,7 @@ export default function PlayerAdOverlay({ adUrl, onComplete }: PlayerAdOverlayPr
         setVerificationFailed(true);
       } else {
         // Verification successful, start the final countdown
+        setVerificationFailed(false);
         startCountdown();
       }
       // Clean up timestamp after check
@@ -65,7 +69,6 @@ export default function PlayerAdOverlay({ adUrl, onComplete }: PlayerAdOverlayPr
   };
   
   const isVerifying = hasClickedAd && adClickTimestamp !== null;
-  const isCountingDown = hasClickedAd && adClickTimestamp === null;
 
   return (
     <div className="absolute inset-0 bg-black/80 backdrop-blur-sm flex flex-col items-center justify-center z-10 text-white p-4 space-y-6 text-center">
@@ -74,18 +77,18 @@ export default function PlayerAdOverlay({ adUrl, onComplete }: PlayerAdOverlayPr
         <p className="text-base md:text-lg text-muted-foreground max-w-md">
           {isCountingDown && `¡Gracias! Desbloqueando en ${countdown} segundos...`}
           {isVerifying && 'Verificando... Por favor, permanece en la página del anuncio al menos 5 segundos.'}
-          {!hasClickedAd && !isVerifying && 'Haz clic en el anuncio y espera 5 segundos en esa página para desbloquear el contenido.'}
+          {!hasClickedAd && !isCountingDown && 'Haz clic en el anuncio y espera 5 segundos en esa página para desbloquear el contenido.'}
         </p>
       </div>
 
-      {!hasClickedAd && !isVerifying && (
+      {!hasClickedAd && !isCountingDown && (
         <Button onClick={handleAdClick} size="lg" className="animate-pulse">
           <Hourglass className="mr-2" />
           Visitar Anuncio para Desbloquear
         </Button>
       )}
       
-      {verificationFailed && (
+      {verificationFailed && !isCountingDown && (
          <p className="flex items-center gap-2 text-yellow-400">
           <AlertTriangle className="h-5 w-5" />
           Has vuelto muy rápido. Por favor, inténtalo de nuevo.
