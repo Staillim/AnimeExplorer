@@ -258,7 +258,7 @@ export function AddAnimeForm({ animeToEdit, onSuccess }: AddAnimeFormProps) {
             <Separator />
             
             <div>
-              <h3 className="text-lg font-medium mb-4">Temporadas</h3>
+              <h3 className="text-lg font-medium mb-4">Temporadas y Versiones (para películas)</h3>
               <div className="space-y-6">
                 {seasonFields.map((season, seasonIndex) => (
                   <SeasonField
@@ -277,7 +277,7 @@ export function AddAnimeForm({ animeToEdit, onSuccess }: AddAnimeFormProps) {
                 onClick={() => appendSeason({ title: `Temporada ${seasonFields.length + 1}`, language: "sub", chapters: [{ title: "Capítulo 1", url: ""}] })}
               >
                 <PlusCircle className="mr-2 h-4 w-4" />
-                Agregar Temporada
+                Agregar Temporada / Versión
               </Button>
               <FormField
                 control={form.control}
@@ -320,8 +320,8 @@ function SeasonField({ seasonIndex, removeSeason, totalSeasons }: { seasonIndex:
           name={`seasons.${seasonIndex}.title`}
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Título de la Temporada</FormLabel>
-              <FormControl><Input {...field} /></FormControl>
+              <FormLabel>Título de la Temporada / Versión</FormLabel>
+              <FormControl><Input {...field} placeholder="Temporada 1, Película Completa, etc." /></FormControl>
               <FormMessage />
             </FormItem>
           )}
@@ -349,7 +349,7 @@ function SeasonField({ seasonIndex, removeSeason, totalSeasons }: { seasonIndex:
         />
       </div>
 
-      <h4 className="text-md font-medium mb-2">Capítulos</h4>
+      <h4 className="text-md font-medium mb-2">Capítulos (o enlace de la película)</h4>
       <div className="space-y-3">
         {fields.map((chapter, chapterIndex) => (
           <div key={chapter.id} className="flex items-end gap-2">
@@ -358,7 +358,7 @@ function SeasonField({ seasonIndex, removeSeason, totalSeasons }: { seasonIndex:
               name={`seasons.${seasonIndex}.chapters.${chapterIndex}.title`}
               render={({ field }) => (
                 <FormItem className="flex-grow">
-                  <FormControl><Input {...field} placeholder={`Título del Cap. ${chapterIndex + 1}`} /></FormControl>
+                  <FormControl><Input {...field} placeholder={`Título del Cap. ${chapterIndex + 1} (opcional)`} /></FormControl>
                   <FormMessage />
                 </FormItem>
               )}
@@ -418,3 +418,5 @@ function SeasonField({ seasonIndex, removeSeason, totalSeasons }: { seasonIndex:
     </div>
   );
 }
+
+    
