@@ -109,6 +109,24 @@ export async function updateAnimeAction(id: string, values: AnimeFormData) {
   }
 }
 
+export async function deleteAnimeAction(id: string) {
+    const adminUser = await getAdminUserProfile();
+    if (!adminUser) {
+        return { success: false, message: 'Permission denied. You must be an administrator.' };
+    }
+
+    try {
+        const adminDb = getFirestore(adminApp);
+        await adminDb.collection('animes').doc(id).delete();
+        revalidatePath('/admin');
+        revalidatePath('/');
+        return { success: true, message: 'Contenido eliminado.' };
+    } catch (error: any) {
+        console.error('Error in deleteAnimeAction:', error);
+        return { success: false, message: `Error deleting content: ${error.message}` };
+    }
+}
+
 
 export async function addAdAction(url: string) {
     const adminUser = await getAdminUserProfile();
