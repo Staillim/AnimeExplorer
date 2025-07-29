@@ -1,4 +1,7 @@
 
+import { config } from 'dotenv';
+config(); // Load environment variables
+
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { getAuth } from 'firebase-admin/auth';
