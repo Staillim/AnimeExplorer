@@ -1,4 +1,7 @@
 
+import { config } from 'dotenv';
+config(); // Load environment variables FIRST.
+
 import * as admin from 'firebase-admin';
 
 let adminApp: admin.app.App;

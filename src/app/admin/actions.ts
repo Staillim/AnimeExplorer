@@ -1,6 +1,9 @@
 
 'use server';
 
+import { config } from 'dotenv';
+config(); // Load environment variables FIRST.
+
 import { revalidatePath } from 'next/cache';
 import { encrypt } from '@/lib/crypto';
 import type { Anime, UserProfile } from '@/lib/types';
@@ -25,7 +28,7 @@ async function getAdminUserProfile(): Promise<UserProfile | null> {
     }
     
     if (!adminApp) {
-        console.error("Firebase Admin SDK not initialized.");
+        console.error("Firebase Admin SDK not initialized. Server Actions will fail.");
         return null;
     }
 
