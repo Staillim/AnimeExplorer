@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useForm } from "react-hook-form";
@@ -68,7 +67,6 @@ export function SignupForm({ onSuccess }: SignupFormProps) {
         email: user.email,
         watchedAnimes: [],
         role: 'user',
-        watchProgress: {}, // Ensure this field is always created
       });
       
       toast({
@@ -77,7 +75,6 @@ export function SignupForm({ onSuccess }: SignupFormProps) {
       });
       onSuccess();
     } catch (error: any) {
-      console.error("Sign up failed:", error);
       toast({
         variant: "destructive",
         title: "Sign Up Failed",
@@ -98,7 +95,6 @@ export function SignupForm({ onSuccess }: SignupFormProps) {
         email: user.email,
         watchedAnimes: [],
         role: 'user',
-        watchProgress: {}, // Ensure this field is always created
       }, { merge: true }); // Merge to avoid overwriting existing data
 
       toast({
@@ -107,7 +103,6 @@ export function SignupForm({ onSuccess }: SignupFormProps) {
       });
       onSuccess();
     } catch (error: any) {
-      console.error("Google Sign-In failed:", error);
       toast({
         variant: "destructive",
         title: "Google Sign-In Failed",

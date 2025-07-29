@@ -20,11 +20,6 @@ export interface Anime {
   chapters: Chapter[];
 }
 
-export interface Ad {
-  id: string;
-  url: string;
-}
-
 export interface UserProfile {
   uid: string;
   email: string | null;

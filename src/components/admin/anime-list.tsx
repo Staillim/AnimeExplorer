@@ -27,8 +27,9 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { doc, deleteDoc } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 import { useToast } from "@/lib/hooks/use-toast";
-import { deleteAnimeAction } from '@/app/admin/actions';
 
 interface AnimeListProps {
   animes: Anime[];
@@ -40,21 +41,21 @@ export function AnimeList({ animes }: AnimeListProps) {
 
   const handleDelete = async (animeId: string, animeTitle: string) => {
     setIsDeleting(true);
-    const result = await deleteAnimeAction(animeId);
-    
-    if (result.success) {
+    try {
+      await deleteDoc(doc(db, "animes", animeId));
       toast({
         title: "Contenido Eliminado",
         description: `"${animeTitle}" ha sido eliminado del catálogo.`,
       });
-    } else {
+    } catch (error: any) {
       toast({
         variant: "destructive",
         title: "Error al eliminar",
-        description: result.message,
+        description: error.message,
       });
+    } finally {
+      setIsDeleting(false);
     }
-    setIsDeleting(false);
   };
 
   return (
