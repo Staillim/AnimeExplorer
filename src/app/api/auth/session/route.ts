@@ -17,14 +17,16 @@ export async function POST(request: Request) {
 
     const sessionCookie = await getAuth(adminApp).createSessionCookie(idToken, { expiresIn });
     
-    cookies().set('session', sessionCookie, {
+    const response = NextResponse.json({ status: 'success' });
+    
+    response.cookies.set('session', sessionCookie, {
       maxAge: expiresIn,
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       path: '/',
     });
 
-    return NextResponse.json({ status: 'success' });
+    return response;
   } catch (error) {
     console.error('Session cookie creation failed:', error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
@@ -34,8 +36,9 @@ export async function POST(request: Request) {
 
 export async function DELETE() {
   try {
-    cookies().delete('session');
-    return NextResponse.json({ status: 'success' });
+    const response = NextResponse.json({ status: 'success' });
+    response.cookies.delete('session');
+    return response;
   } catch (error) {
     console.error('Session cookie deletion failed:', error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
