@@ -13,7 +13,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "../ui/button";
-import { Edit, Trash2 } from "lucide-react";
+import { Edit, Trash2, Loader2 } from "lucide-react";
 import Image from "next/image";
 import Link from 'next/link';
 import {
@@ -28,7 +28,8 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/lib/hooks/use-toast";
-import { deleteAnimeAction } from '@/app/admin/actions';
+import { doc, deleteDoc } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 
 interface AnimeListProps {
   animes: Anime[];
@@ -40,17 +41,17 @@ export function AnimeList({ animes }: AnimeListProps) {
 
   const handleDelete = async (animeId: string, animeTitle: string) => {
     setIsDeleting(animeId);
-    const result = await deleteAnimeAction(animeId);
-    if (result.success) {
+    try {
+      await deleteDoc(doc(db, 'animes', animeId));
       toast({
         title: "Contenido Eliminado",
         description: `"${animeTitle}" ha sido eliminado del catálogo.`,
       });
-    } else {
+    } catch (error: any) {
       toast({
         variant: "destructive",
         title: "Error al eliminar",
-        description: result.message,
+        description: error.message || "Ocurrió un error inesperado.",
       });
     }
     setIsDeleting(null);

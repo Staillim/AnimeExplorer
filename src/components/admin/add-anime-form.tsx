@@ -21,7 +21,9 @@ import { useToast } from "@/lib/hooks/use-toast";
 import { Loader2, PlusCircle, Trash2 } from "lucide-react";
 import { Separator } from "../ui/separator";
 import type { Anime } from "@/lib/types";
-import { addAnimeAction, updateAnimeAction } from "@/app/admin/actions";
+import { collection, addDoc, doc, updateDoc } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+import { revalidatePath } from 'next/cache'; // This might not work as expected in client components, but we'll leave it for now
 
 
 const chapterSchema = z.object({
@@ -81,24 +83,36 @@ export function AddAnimeForm({ animeToEdit, onSuccess }: AddAnimeFormProps) {
   const isEditMode = !!animeToEdit;
 
   async function onSubmit(values: FormData) {
-    const result = isEditMode
-      ? await updateAnimeAction(animeToEdit.id, values)
-      : await addAnimeAction(values);
+    try {
+      const genresArray = values.genres.split(',').map(g => g.trim());
+      const submissionData = {
+        ...values,
+        bannerImage: values.bannerImage || `https://placehold.co/1200x400.png`,
+        genres: genresArray,
+      };
 
-    if (result.success) {
+      if (isEditMode) {
+        const docRef = doc(db, 'animes', animeToEdit.id);
+        await updateDoc(docRef, submissionData);
+      } else {
+        await addDoc(collection(db, 'animes'), submissionData);
+      }
+      
       toast({
         title: isEditMode ? "Contenido Actualizado" : "Contenido Agregado",
-        description: result.message,
+        description: `${values.title} ha sido ${isEditMode ? 'actualizado' : 'agregado'} correctamente.`,
       });
+
       if (!isEditMode) {
         form.reset();
       }
       if (onSuccess) onSuccess();
-    } else {
+
+    } catch (error: any) {
       toast({
         variant: "destructive",
         title: isEditMode ? "Error al actualizar" : "Error al agregar",
-        description: result.message,
+        description: error.message || "Ocurrió un error inesperado.",
       });
     }
   }

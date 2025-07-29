@@ -2,7 +2,7 @@
 "use client";
 
 import { useState } from 'react';
-import { useForm, useFormState } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import type { Ad } from '@/lib/types';
@@ -12,7 +12,6 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Loader2, PlusCircle, Trash2 } from 'lucide-react';
 import { useToast } from '@/lib/hooks/use-toast';
-import { addAdAction, deleteAdAction } from '@/app/admin/actions';
 import {
   Table,
   TableBody,
@@ -32,6 +31,8 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { collection, addDoc, deleteDoc, doc } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 
 const formSchema = z.object({
   url: z.string().url({ message: 'Por favor, introduce una URL válida.' }),
@@ -55,35 +56,35 @@ export function AdManagement({ ads }: AdManagementProps) {
   const { isSubmitting } = form.formState;
 
   async function onSubmit(values: FormData) {
-    const result = await addAdAction(values.url);
-    if (result.success) {
+    try {
+      await addDoc(collection(db, 'ads'), { url: values.url });
       toast({
         title: 'Anuncio Agregado',
         description: 'El nuevo anuncio se ha añadido correctamente.',
       });
       form.reset();
-    } else {
+    } catch (error: any) {
       toast({
         variant: 'destructive',
         title: 'Error al agregar',
-        description: result.message,
+        description: error.message || 'No tienes permiso para realizar esta acción.',
       });
     }
   }
 
   async function handleDelete(ad: Ad) {
     setIsDeleting(ad.id);
-    const result = await deleteAdAction(ad.id);
-    if (result.success) {
+    try {
+      await deleteDoc(doc(db, 'ads', ad.id));
       toast({
         title: 'Anuncio Eliminado',
         description: 'El anuncio ha sido eliminado.',
       });
-    } else {
+    } catch (error: any) {
       toast({
         variant: 'destructive',
         title: 'Error al eliminar',
-        description: result.message,
+        description: error.message || 'No tienes permiso para realizar esta acción.',
       });
     }
     setIsDeleting(null);
