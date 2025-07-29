@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import { Button } from './ui/button';
-import { Hourglass, CheckCircle } from 'lucide-react';
+import { Hourglass, CheckCircle, Loader2 } from 'lucide-react';
 
 interface PlayerAdOverlayProps {
   adUrl: string;
@@ -55,7 +55,7 @@ export default function PlayerAdOverlay({ adUrl, onComplete }: PlayerAdOverlayPr
         <div className="flex items-center text-lg font-semibold text-green-400">
           {countdown > 0 ? (
             <>
-              <LoaderIcon className="animate-spin mr-2" />
+              <Loader2 className="animate-spin mr-2" />
               <span>Desbloqueando en {countdown}...</span>
             </>
           ) : (
@@ -69,29 +69,3 @@ export default function PlayerAdOverlay({ adUrl, onComplete }: PlayerAdOverlayPr
     </div>
   );
 }
-
-function LoaderIcon(props: React.SVGProps<SVGSVGElement>) {
-    return (
-      <svg
-        {...props}
-        xmlns="http://www.w3.org/2000/svg"
-        width="24"
-        height="24"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      >
-        <path d="M12 2v4" />
-        <path d="m16.2 7.8 2.8-2.8" />
-        <path d="M18 12h4" />
-        <path d="m16.2 16.2 2.8 2.8" />
-        <path d="M12 18v4" />
-        <path d="m7.8 16.2-2.8 2.8" />
-        <path d="M6 12H2" />
-        <path d="m7.8 7.8-2.8-2.8" />
-      </svg>
-    )
-  }

@@ -1,17 +1,18 @@
 
 "use client";
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import Image from 'next/image';
 import { notFound, useParams } from 'next/navigation';
-import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, getDocs, collection } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import type { Anime } from '@/lib/types';
+import type { Anime, Ad } from '@/lib/types';
 import { useAuth } from '@/context/auth-context';
 import { Badge } from '@/components/ui/badge';
 import { Star, Calendar, Tv, PlayCircle, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
+import PlayerAdOverlay from '@/components/player-ad-overlay';
 
 async function getAnime(id: string): Promise<Anime | null> {
     const docRef = doc(db, 'animes', id);
@@ -22,6 +23,13 @@ async function getAnime(id: string): Promise<Anime | null> {
     return null;
 }
 
+async function getAds(): Promise<Ad[]> {
+    const adsCollection = collection(db, 'ads');
+    const adSnapshot = await getDocs(adsCollection);
+    return adSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Ad));
+}
+
+
 export default function AnimeDetailPage() {
     const params = useParams();
     const animeId = Array.isArray(params.id) ? params.id[0] : params.id;
@@ -29,8 +37,16 @@ export default function AnimeDetailPage() {
     const { user, userProfile, refetchUserProfile } = useAuth();
     
     const [anime, setAnime] = useState<Anime | null>(null);
+    const [ads, setAds] = useState<Ad[]>([]);
     const [loading, setLoading] = useState(true);
     const [selectedChapterIndex, setSelectedChapterIndex] = useState(0);
+    const [isPlayerLocked, setIsPlayerLocked] = useState(true);
+
+    const randomAd = useMemo(() => {
+        if (ads.length === 0) return null;
+        const randomIndex = Math.floor(Math.random() * ads.length);
+        return ads[randomIndex];
+    }, [ads]);
 
     const updateUserWatchHistory = useCallback(async (newChapterIndex: number) => {
         if (!user || !animeId) return;
@@ -56,9 +72,13 @@ export default function AnimeDetailPage() {
             return;
         }
 
-        getAnime(animeId).then(animeData => {
+        Promise.all([
+            getAnime(animeId),
+            getAds()
+        ]).then(([animeData, adsData]) => {
             if (animeData) {
                 setAnime(animeData);
+                setAds(adsData);
                 if (userProfile?.watchProgress && userProfile.watchProgress[animeId] !== undefined) {
                     const lastWatchedIndex = userProfile.watchProgress[animeId];
                     if(lastWatchedIndex < animeData.chapters.length) {
@@ -68,6 +88,9 @@ export default function AnimeDetailPage() {
             } else {
                 notFound();
             }
+        }).catch(err => {
+            console.error("Error fetching page data:", err);
+            notFound();
         }).finally(() => {
             setLoading(false);
         });
@@ -75,7 +98,14 @@ export default function AnimeDetailPage() {
 
     const handleChapterSelect = (index: number) => {
         setSelectedChapterIndex(index);
-        updateUserWatchHistory(index);
+        setIsPlayerLocked(true); // Lock the player for the new chapter
+        if (user) {
+            updateUserWatchHistory(index);
+        }
+    };
+    
+    const handleAdComplete = () => {
+        setIsPlayerLocked(false);
     };
 
     if (loading) {
@@ -149,7 +179,10 @@ export default function AnimeDetailPage() {
                         <h2 className="text-2xl font-bold font-headline text-primary">
                             Viendo: {selectedChapter.title || `Capítulo ${selectedChapterIndex + 1}`}
                         </h2>
-                        <div className="aspect-video bg-black rounded-lg overflow-hidden shadow-2xl shadow-black/50">
+                        <div className="relative aspect-video bg-black rounded-lg overflow-hidden shadow-2xl shadow-black/50">
+                           { isPlayerLocked && randomAd && (
+                                <PlayerAdOverlay adUrl={randomAd.url} onComplete={handleAdComplete} />
+                           )}
                            <iframe
                                 key={selectedChapter.url}
                                 src={selectedChapter.url}
