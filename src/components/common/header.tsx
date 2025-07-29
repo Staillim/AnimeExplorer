@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from "next/link";
@@ -38,12 +39,6 @@ export default function Header() {
               <Link href="/">
                 <Home className="h-5 w-5" />
                 <span className="hidden md:inline ml-2">Catálogo</span>
-              </Link>
-            </Button>
-            <Button asChild variant="ghost">
-              <Link href="/recommendations">
-                <WandSparkles className="h-5 w-5" />
-                <span className="hidden md:inline ml-2">Recomendaciones</span>
               </Link>
             </Button>
              {userProfile?.role === 'admin' && (
