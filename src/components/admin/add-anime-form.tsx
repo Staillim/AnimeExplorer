@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useForm, useFieldArray, useFormContext } from "react-hook-form";
+import { useForm, useFieldArray, useFormContext, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Button } from "@/components/ui/button";
@@ -32,10 +32,28 @@ const chapterSchema = z.object({
 });
 
 const seasonSchema = z.object({
-  title: z.string().min(1, { message: "El título de la temporada es obligatorio."}),
+  type: z.enum(['season', 'movie']),
+  title: z.string().min(1, { message: "El título es obligatorio."}),
   language: z.enum(['sub', 'latino']),
-  chapters: z.array(chapterSchema).min(1, { message: "Debes agregar al menos un capítulo." }),
+  chapters: z.array(chapterSchema).optional(),
+  movieUrl: z.string().optional(),
+}).superRefine((data, ctx) => {
+  if (data.type === 'season' && (!data.chapters || data.chapters.length === 0)) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Las temporadas deben tener al menos un capítulo.",
+      path: ['chapters'],
+    });
+  }
+  if (data.type === 'movie' && (!data.movieUrl || !z.string().url().safeParse(data.movieUrl).success)) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Se requiere una URL válida para la película.",
+      path: ['movieUrl'],
+    });
+  }
 });
+
 
 const formSchema = z.object({
   title: z.string().min(1, { message: "El título es obligatorio." }),
@@ -45,7 +63,7 @@ const formSchema = z.object({
   description: z.string().min(10, { message: "La descripción debe tener al menos 10 caracteres." }),
   genres: z.string().min(1, { message: "Introduce al menos un género." }),
   rating: z.coerce.number().min(0).max(10),
-  seasons: z.array(seasonSchema).min(1, { message: "Debes agregar al menos una temporada."}),
+  seasons: z.array(seasonSchema).min(1, { message: "Debes agregar al menos una temporada o película."}),
   dataAiHint: z.string().min(2, { message: "AI hint must be at least 2 characters." }),
 });
 
@@ -73,7 +91,7 @@ export function AddAnimeForm({ animeToEdit, onSuccess }: AddAnimeFormProps) {
           description: "",
           genres: "",
           rating: 7.0,
-          seasons: [{ title: "Temporada 1", language: 'sub', chapters: [{ title: "Capítulo 1", url: "" }] }],
+          seasons: [{ type: "season", title: "Temporada 1", language: 'sub', chapters: [{ title: "Capítulo 1", url: "" }] }],
           dataAiHint: "anime",
         },
   });
@@ -89,10 +107,22 @@ export function AddAnimeForm({ animeToEdit, onSuccess }: AddAnimeFormProps) {
   async function onSubmit(values: FormData) {
     try {
       const genresArray = values.genres.split(',').map(g => g.trim());
+      
+      const processedSeasons = values.seasons.map(season => {
+        if (season.type === 'movie') {
+          return {
+            ...season,
+            chapters: [{ title: season.title, url: season.movieUrl || '' }],
+          };
+        }
+        return season;
+      });
+
       const submissionData = {
         ...values,
         bannerImage: values.bannerImage || `https://placehold.co/1200x400.png`,
         genres: genresArray,
+        seasons: processedSeasons,
       };
 
       if (isEditMode) {
@@ -258,7 +288,7 @@ export function AddAnimeForm({ animeToEdit, onSuccess }: AddAnimeFormProps) {
             <Separator />
             
             <div>
-              <h3 className="text-lg font-medium mb-4">Temporadas y Versiones (para películas)</h3>
+              <h3 className="text-lg font-medium mb-4">Versiones y Contenido</h3>
               <div className="space-y-6">
                 {seasonFields.map((season, seasonIndex) => (
                   <SeasonField
@@ -274,10 +304,10 @@ export function AddAnimeForm({ animeToEdit, onSuccess }: AddAnimeFormProps) {
                 variant="outline"
                 size="sm"
                 className="mt-6"
-                onClick={() => appendSeason({ title: `Temporada ${seasonFields.length + 1}`, language: "sub", chapters: [{ title: "Capítulo 1", url: ""}] })}
+                onClick={() => appendSeason({ type: "season", title: `Temporada ${seasonFields.length + 1}`, language: "sub", chapters: [{ title: "Capítulo 1", url: ""}] })}
               >
                 <PlusCircle className="mr-2 h-4 w-4" />
-                Agregar Temporada / Versión
+                Agregar Versión (Temporada o Película)
               </Button>
               <FormField
                 control={form.control}
@@ -312,16 +342,42 @@ function SeasonField({ seasonIndex, removeSeason, totalSeasons }: { seasonIndex:
     name: `seasons.${seasonIndex}.chapters`,
   });
 
+  const versionType = useWatch({
+    control,
+    name: `seasons.${seasonIndex}.type`,
+  });
+
   return (
-    <div className="p-4 border rounded-lg bg-secondary/20 relative">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+    <div className="p-4 border rounded-lg bg-secondary/20 relative space-y-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <FormField
+          control={control}
+          name={`seasons.${seasonIndex}.type`}
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Tipo de Versión</FormLabel>
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecciona un tipo" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  <SelectItem value="season">Temporada</SelectItem>
+                  <SelectItem value="movie">Película</SelectItem>
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
         <FormField
           control={control}
           name={`seasons.${seasonIndex}.title`}
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Título de la Temporada / Versión</FormLabel>
-              <FormControl><Input {...field} placeholder="Temporada 1, Película Completa, etc." /></FormControl>
+              <FormLabel>Título de la Versión</FormLabel>
+              <FormControl><Input {...field} placeholder={versionType === 'movie' ? 'Película Completa' : 'Temporada 1'} /></FormControl>
               <FormMessage />
             </FormItem>
           )}
@@ -349,61 +405,79 @@ function SeasonField({ seasonIndex, removeSeason, totalSeasons }: { seasonIndex:
         />
       </div>
 
-      <h4 className="text-md font-medium mb-2">Capítulos (o enlace de la película)</h4>
-      <div className="space-y-3">
-        {fields.map((chapter, chapterIndex) => (
-          <div key={chapter.id} className="flex items-end gap-2">
-            <FormField
-              control={control}
-              name={`seasons.${seasonIndex}.chapters.${chapterIndex}.title`}
-              render={({ field }) => (
-                <FormItem className="flex-grow">
-                  <FormControl><Input {...field} placeholder={`Título del Cap. ${chapterIndex + 1} (opcional)`} /></FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={control}
-              name={`seasons.${seasonIndex}.chapters.${chapterIndex}.url`}
-              render={({ field }) => (
-                <FormItem className="flex-grow">
-                  <FormControl><Input {...field} placeholder="https://..." /></FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              onClick={() => remove(chapterIndex)}
-              disabled={fields.length <= 1}
-            >
-              <Trash2 className="h-4 w-4 text-destructive" />
-            </Button>
-          </div>
-        ))}
-      </div>
-       <Button
-        type="button"
-        variant="ghost"
-        size="sm"
-        className="mt-3"
-        onClick={() => append({ title: `Capítulo ${fields.length + 1}`, url: "" })}
-      >
-        <PlusCircle className="mr-2 h-4 w-4" />
-        Agregar Capítulo
-      </Button>
-       <FormField
+      {versionType === 'movie' && (
+         <FormField
           control={control}
-          name={`seasons.${seasonIndex}.chapters`}
-          render={() => (
-             <FormItem>
-               <FormMessage className="mt-2" />
-             </FormItem>
+          name={`seasons.${seasonIndex}.movieUrl`}
+          render={({ field }) => (
+            <FormItem>
+               <FormLabel>URL de la Película</FormLabel>
+              <FormControl><Input {...field} placeholder="https://..." /></FormControl>
+              <FormMessage />
+            </FormItem>
           )}
         />
+      )}
+
+      {versionType === 'season' && (
+      <>
+        <h4 className="text-md font-medium pt-2">Capítulos</h4>
+        <div className="space-y-3">
+          {fields.map((chapter, chapterIndex) => (
+            <div key={chapter.id} className="flex items-end gap-2">
+              <FormField
+                control={control}
+                name={`seasons.${seasonIndex}.chapters.${chapterIndex}.title`}
+                render={({ field }) => (
+                  <FormItem className="flex-grow">
+                    <FormControl><Input {...field} placeholder={`Título del Cap. ${chapterIndex + 1} (opcional)`} /></FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={control}
+                name={`seasons.${seasonIndex}.chapters.${chapterIndex}.url`}
+                render={({ field }) => (
+                  <FormItem className="flex-grow">
+                    <FormControl><Input {...field} placeholder="https://..." /></FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                onClick={() => remove(chapterIndex)}
+                disabled={fields.length <= 1}
+              >
+                <Trash2 className="h-4 w-4 text-destructive" />
+              </Button>
+            </div>
+          ))}
+        </div>
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          className="mt-3"
+          onClick={() => append({ title: `Capítulo ${fields.length + 1}`, url: "" })}
+        >
+          <PlusCircle className="mr-2 h-4 w-4" />
+          Agregar Capítulo
+        </Button>
+        <FormField
+            control={control}
+            name={`seasons.${seasonIndex}.chapters`}
+            render={() => (
+              <FormItem>
+                <FormMessage className="mt-2" />
+              </FormItem>
+            )}
+          />
+      </>
+      )}
       
       <Button
         type="button"
@@ -418,5 +492,3 @@ function SeasonField({ seasonIndex, removeSeason, totalSeasons }: { seasonIndex:
     </div>
   );
 }
-
-    
