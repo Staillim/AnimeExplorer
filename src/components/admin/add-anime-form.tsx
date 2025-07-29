@@ -36,7 +36,7 @@ const seasonSchema = z.object({
   title: z.string().min(1, { message: "El título es obligatorio."}),
   language: z.enum(['sub', 'latino']),
   chapters: z.array(chapterSchema).optional(),
-  movieUrl: z.string().optional(),
+  movieUrl: z.string().optional().nullable(),
 }).superRefine((data, ctx) => {
   if (data.type === 'season' && (!data.chapters || data.chapters.length === 0)) {
     ctx.addIssue({
@@ -74,6 +74,17 @@ interface AddAnimeFormProps {
   onSuccess?: () => void;
 }
 
+const getDefaultSeason = (type: 'season' | 'movie' = 'season', title = "Temporada 1") => {
+    return {
+        type: type,
+        title: title,
+        language: 'sub' as const,
+        chapters: type === 'season' ? [{ title: "Capítulo 1", url: "" }] : [],
+        movieUrl: type === 'movie' ? "" : null,
+    };
+}
+
+
 export function AddAnimeForm({ animeToEdit, onSuccess }: AddAnimeFormProps) {
   const { toast } = useToast();
   const form = useForm<FormData>({
@@ -82,6 +93,10 @@ export function AddAnimeForm({ animeToEdit, onSuccess }: AddAnimeFormProps) {
       ? {
           ...animeToEdit,
           genres: animeToEdit.genres.join(", "),
+          seasons: animeToEdit.seasons.map(s => ({
+            ...s,
+            movieUrl: s.type === 'movie' ? s.chapters[0]?.url || '' : null,
+          })),
         }
       : {
           title: "",
@@ -91,7 +106,7 @@ export function AddAnimeForm({ animeToEdit, onSuccess }: AddAnimeFormProps) {
           description: "",
           genres: "",
           rating: 7.0,
-          seasons: [{ type: "season", title: "Temporada 1", language: 'sub', chapters: [{ title: "Capítulo 1", url: "" }] }],
+          seasons: [getDefaultSeason()],
           dataAiHint: "anime",
         },
   });
@@ -111,11 +126,18 @@ export function AddAnimeForm({ animeToEdit, onSuccess }: AddAnimeFormProps) {
       const processedSeasons = values.seasons.map(season => {
         if (season.type === 'movie') {
           return {
-            ...season,
-            chapters: [{ title: season.title, url: season.movieUrl || '' }],
+            type: 'movie',
+            title: values.title, // Use main title for movie
+            language: season.language,
+            chapters: [{ title: values.title, url: season.movieUrl || '' }],
           };
         }
-        return season;
+        return {
+          type: 'season',
+          title: season.title,
+          language: season.language,
+          chapters: season.chapters || [],
+        };
       });
 
       const submissionData = {
@@ -304,7 +326,7 @@ export function AddAnimeForm({ animeToEdit, onSuccess }: AddAnimeFormProps) {
                 variant="outline"
                 size="sm"
                 className="mt-6"
-                onClick={() => appendSeason({ type: "season", title: `Temporada ${seasonFields.length + 1}`, language: "sub", chapters: [{ title: "Capítulo 1", url: ""}] })}
+                onClick={() => appendSeason(getDefaultSeason('season', `Temporada ${seasonFields.length + 1}`))}
               >
                 <PlusCircle className="mr-2 h-4 w-4" />
                 Agregar Versión (Temporada o Película)
@@ -335,7 +357,7 @@ export function AddAnimeForm({ animeToEdit, onSuccess }: AddAnimeFormProps) {
 
 
 function SeasonField({ seasonIndex, removeSeason, totalSeasons }: { seasonIndex: number, removeSeason: (index: number) => void, totalSeasons: number }) {
-  const { control } = useFormContext<FormData>();
+  const { control, setValue } = useFormContext<FormData>();
 
   const { fields, append, remove } = useFieldArray({
     control,
@@ -356,7 +378,18 @@ function SeasonField({ seasonIndex, removeSeason, totalSeasons }: { seasonIndex:
           render={({ field }) => (
             <FormItem>
               <FormLabel>Tipo de Versión</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <Select 
+                onValueChange={(value) => {
+                  field.onChange(value);
+                  if (value === 'movie') {
+                    setValue(`seasons.${seasonIndex}.chapters`, []);
+                    setValue(`seasons.${seasonIndex}.movieUrl`, "");
+                  } else {
+                     setValue(`seasons.${seasonIndex}.chapters`, [{ title: "Capítulo 1", url: ""}]);
+                     setValue(`seasons.${seasonIndex}.movieUrl`, null);
+                  }
+                }} 
+                defaultValue={field.value}>
                 <FormControl>
                   <SelectTrigger>
                     <SelectValue placeholder="Selecciona un tipo" />
@@ -414,7 +447,7 @@ function SeasonField({ seasonIndex, removeSeason, totalSeasons }: { seasonIndex:
           render={({ field }) => (
             <FormItem>
                <FormLabel>URL de la Película</FormLabel>
-              <FormControl><Input {...field} placeholder="https://..." /></FormControl>
+              <FormControl><Input {...field} placeholder="https://..." value={field.value ?? ''} /></FormControl>
               <FormMessage />
             </FormItem>
           )}
@@ -494,5 +527,3 @@ function SeasonField({ seasonIndex, removeSeason, totalSeasons }: { seasonIndex:
     </div>
   );
 }
-
-    

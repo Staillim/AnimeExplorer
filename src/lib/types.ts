@@ -11,7 +11,7 @@ export interface Season {
   title: string;
   language: 'sub' | 'latino';
   chapters: Chapter[];
-  movieUrl?: string; // Only for type 'movie'
+  movieUrl?: string | null; // Only for type 'movie'
 }
 
 export interface Anime {
