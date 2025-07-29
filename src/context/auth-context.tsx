@@ -17,12 +17,19 @@ async function setSessionCookie(user: User) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ idToken }),
     });
+
+    const responseData = await response.json();
+
     if (!response.ok) {
-        throw new Error('Failed to set session cookie');
+        console.error('Failed to set session cookie. Server responded with:', responseData);
+        // Do not throw an error here, just log it. The app can continue without a server session.
+        // The user will still be logged in on the client. Server actions will fail.
+        return { status: 'error', message: responseData.message || 'Unknown error' };
     }
-    return await response.json();
+    
+    return responseData;
   } catch (error) {
-    console.error("Error setting session cookie:", error);
+    console.error("Error calling session API:", error);
     return { status: 'error' };
   }
 }
