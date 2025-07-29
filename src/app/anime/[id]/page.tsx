@@ -212,7 +212,7 @@ export default function AnimeDetailPage() {
                               </Select>
                            )}
                         </div>
-                        <div className="relative aspect-video bg-black rounded-lg overflow-hidden shadow-2xl shadow-black/50">
+                        <div className="relative aspect-video bg-black rounded-lg overflow-hidden shadow-2xl shadow-primary/20 border-2 border-primary/50">
                            { isPlayerLocked && randomAd && (
                                 <PlayerAdOverlay adUrl={randomAd.url} onComplete={handleAdComplete} />
                            )}
