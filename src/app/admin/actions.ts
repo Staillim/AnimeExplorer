@@ -2,8 +2,6 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { collection, addDoc, doc, updateDoc, deleteDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
 import { encrypt } from '@/lib/crypto';
 import type { Anime, UserProfile } from '@/lib/types';
 import { cookies } from 'next/headers';
@@ -22,10 +20,9 @@ async function getAdminUserProfile(): Promise<UserProfile | null> {
   try {
     const sessionCookie = cookies().get('session')?.value;
     if (!sessionCookie) {
-      console.log('No session cookie found.');
       return null;
     }
-
+    
     if (!adminApp) {
         console.error("Firebase Admin SDK not initialized.");
         return null;
@@ -41,22 +38,15 @@ async function getAdminUserProfile(): Promise<UserProfile | null> {
         const userProfile = userDocSnap.data() as UserProfile;
         if (userProfile.role === 'admin') {
             return userProfile;
-        } else {
-            console.log(`User ${decodedToken.uid} is not an admin.`);
-            return null;
         }
     }
-    console.log(`User profile for ${decodedToken.uid} does not exist.`);
     return null;
   } catch (error) {
-    if ((error as any).code === 'auth/session-cookie-expired' || (error as any).code === 'auth/id-token-expired') {
-        console.log('Session cookie expired.');
-    } else {
-        console.error('Error verifying session cookie or fetching user profile:', error);
-    }
+    console.error('Error verifying admin user profile:', error);
     return null;
   }
 }
+
 
 async function processAndEncryptData(values: AnimeFormData) {
   const genresArray = values.genres.split(',').map(g => g.trim());
@@ -81,8 +71,9 @@ export async function addAnimeAction(values: AnimeFormData) {
   }
 
   try {
+    const adminDb = getFirestore(adminApp);
     const submissionData = await processAndEncryptData(values);
-    await addDoc(collection(db, 'animes'), submissionData);
+    await adminDb.collection('animes').add(submissionData);
     
     revalidatePath('/admin');
     revalidatePath('/');
@@ -101,9 +92,10 @@ export async function updateAnimeAction(id: string, values: AnimeFormData) {
   }
   
   try {
+    const adminDb = getFirestore(adminApp);
     const submissionData = await processAndEncryptData(values);
-    const docRef = doc(db, 'animes', id);
-    await updateDoc(docRef, submissionData);
+    const docRef = adminDb.collection('animes').doc(id);
+    await docRef.update(submissionData);
 
     revalidatePath('/admin');
     revalidatePath(`/admin/edit/${id}`);
@@ -129,7 +121,8 @@ export async function addAdAction(url: string) {
     }
 
     try {
-        await addDoc(collection(db, 'ads'), { url });
+        const adminDb = getFirestore(adminApp);
+        await adminDb.collection('ads').add({ url });
         revalidatePath('/admin');
         return { success: true, message: 'Ad has been added.' };
     } catch (error: any) {
@@ -145,7 +138,8 @@ export async function deleteAdAction(id: string) {
     }
 
     try {
-        await deleteDoc(doc(db, 'ads', id));
+        const adminDb = getFirestore(adminApp);
+        await adminDb.collection('ads').doc(id).delete();
         revalidatePath('/admin');
         return { success: true, message: 'Ad has been deleted.' };
     } catch (error: any) {
