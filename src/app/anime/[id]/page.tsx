@@ -70,35 +70,49 @@ export default function AnimeDetailPage() {
             return;
         }
 
-        Promise.all([getAnime(animeId), getAds()]).then(([animeData, adData]) => {
-            if (animeData) {
-                setAnime(animeData);
-                setAds(adData);
-                setIsMovie(animeData.chapters.length === 1 && (animeData.season.toLowerCase().includes('película') || animeData.season.toLowerCase().includes('movie')));
+        const fetchData = async () => {
+            try {
+                const [animeData, adData] = await Promise.all([getAnime(animeId), getAds()]);
+                
+                if (animeData) {
+                    setAnime(animeData);
+                    setAds(adData);
+                    setIsMovie(animeData.chapters.length === 1 && (animeData.season.toLowerCase().includes('película') || animeData.season.toLowerCase().includes('movie')));
 
-                const lastWatchedIndex = userProfile?.watchProgress?.[animeId];
-                if (lastWatchedIndex !== undefined && lastWatchedIndex < animeData.chapters.length) {
-                    setSelectedChapterIndex(lastWatchedIndex);
+                    const lastWatchedIndex = userProfile?.watchProgress?.[animeId];
+                    if (lastWatchedIndex !== undefined && lastWatchedIndex < animeData.chapters.length) {
+                        setSelectedChapterIndex(lastWatchedIndex);
+                    } else {
+                        setSelectedChapterIndex(0);
+                    }
                 } else {
-                    setSelectedChapterIndex(0);
+                    notFound();
                 }
-            } else {
+            } catch (error) {
+                console.error("Failed to fetch anime data or ads:", error);
                 notFound();
+            } finally {
+                setLoading(false);
             }
-        }).finally(() => {
-            setLoading(false);
-        });
+        };
+
+        fetchData();
     }, [animeId, userProfile]);
 
     useEffect(() => {
-        if (anime && anime.chapters[selectedChapterIndex]) {
-            setIsPlayerLocked(true); // Lock player on chapter change
-            setDecryptedUrl(''); // Clear previous URL
-            getDecryptedUrl(anime.chapters[selectedChapterIndex].url)
-                .then(url => {
-                    setDecryptedUrl(url)
-                });
-        }
+        const fetchDecryptedUrl = async () => {
+            if (anime && anime.chapters[selectedChapterIndex]) {
+                setIsPlayerLocked(true); // Lock player on chapter change
+                setDecryptedUrl(''); // Clear previous URL
+                try {
+                    const url = await getDecryptedUrl(anime.chapters[selectedChapterIndex].url);
+                    setDecryptedUrl(url);
+                } catch (error) {
+                    console.error("Failed to get decrypted URL:", error);
+                }
+            }
+        };
+        fetchDecryptedUrl();
     }, [anime, selectedChapterIndex]);
 
     // Ad timer for movies

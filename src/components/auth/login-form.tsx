@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useForm } from "react-hook-form";
@@ -60,6 +61,7 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
       });
       onSuccess();
     } catch (error: any) {
+      console.error("Login failed:", error);
       toast({
         variant: "destructive",
         title: "Login Failed",
@@ -78,6 +80,7 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
       });
       onSuccess();
     } catch (error: any) {
+      console.error("Google Sign-In failed:", error);
       toast({
         variant: "destructive",
         title: "Google Sign-In Failed",

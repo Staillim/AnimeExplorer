@@ -77,6 +77,7 @@ export function SignupForm({ onSuccess }: SignupFormProps) {
       });
       onSuccess();
     } catch (error: any) {
+      console.error("Sign up failed:", error);
       toast({
         variant: "destructive",
         title: "Sign Up Failed",
@@ -106,6 +107,7 @@ export function SignupForm({ onSuccess }: SignupFormProps) {
       });
       onSuccess();
     } catch (error: any) {
+      console.error("Google Sign-In failed:", error);
       toast({
         variant: "destructive",
         title: "Google Sign-In Failed",

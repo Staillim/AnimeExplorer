@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useMemo, useEffect } from 'react';
@@ -39,9 +40,14 @@ export default function Home() {
 
   const filteredAnimes = useMemo(() => {
     return animes.filter(anime => {
-      const matchesGenre = selectedGenre === 'All' || anime.genres.includes(selectedGenre);
-      const matchesSearch = anime.title.toLowerCase().includes(searchTerm.toLowerCase());
-      return matchesGenre && matchesSearch;
+      try {
+        const matchesGenre = selectedGenre === 'All' || anime.genres.includes(selectedGenre);
+        const matchesSearch = anime.title.toLowerCase().includes(searchTerm.toLowerCase());
+        return matchesGenre && matchesSearch;
+      } catch(e) {
+        console.error("Error filtering animes: ", e);
+        return false;
+      }
     });
   }, [searchTerm, selectedGenre, animes]);
 

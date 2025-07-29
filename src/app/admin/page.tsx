@@ -52,12 +52,12 @@ export default function AdminPage() {
       console.error("Error fetching ads:", error);
     });
 
-    Promise.all([new Promise(res => setTimeout(res, 500))]).then(() => setLoadingData(false));
-
+    const timer = setTimeout(() => setLoadingData(false), 500);
 
     return () => {
       unsubscribeAnimes();
       unsubscribeAds();
+      clearTimeout(timer);
     }
   }, [isAuthorized]);
 
