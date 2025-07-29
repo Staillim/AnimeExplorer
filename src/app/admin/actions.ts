@@ -53,7 +53,7 @@ async function getAdminUserProfile(): Promise<UserProfile | null> {
 }
 
 
-async function processAndEncryptData(values: AnimeFormData) {
+export async function processAndEncryptData(values: AnimeFormData) {
   const genresArray = values.genres.split(',').map(g => g.trim());
 
   const encryptedChapters = values.chapters.map(chapter => ({
