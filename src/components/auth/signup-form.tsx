@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useForm } from "react-hook-form";
@@ -67,6 +68,7 @@ export function SignupForm({ onSuccess }: SignupFormProps) {
         email: user.email,
         watchedAnimes: [],
         role: 'user',
+        watchProgress: {}, // Ensure this field is always created
       });
       
       toast({
@@ -95,6 +97,7 @@ export function SignupForm({ onSuccess }: SignupFormProps) {
         email: user.email,
         watchedAnimes: [],
         role: 'user',
+        watchProgress: {}, // Ensure this field is always created
       }, { merge: true }); // Merge to avoid overwriting existing data
 
       toast({

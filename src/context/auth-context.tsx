@@ -28,7 +28,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         displayName: firebaseUser.displayName || 'New User',
         watchedAnimes: [],
         role: 'user', // Default role
-        watchProgress: {},
+        watchProgress: {}, // Ensure this field is always created
       };
       await setDoc(userDocRef, newProfile);
       setUserProfile(newProfile);
@@ -62,6 +62,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = async () => {
     await signOut(auth);
+    // After sign out, clear local state immediately
+    setUser(null);
+    setUserProfile(null);
   };
 
   const value = { user, userProfile, loading, logout, refetchUserProfile };

@@ -20,6 +20,7 @@ async function getAdminUserProfile(): Promise<UserProfile | null> {
   try {
     const sessionCookie = cookies().get('session')?.value;
     if (!sessionCookie) {
+      console.log('Admin check failed: No session cookie found.');
       return null;
     }
     
@@ -40,6 +41,7 @@ async function getAdminUserProfile(): Promise<UserProfile | null> {
             return userProfile;
         }
     }
+    console.log(`Admin check failed: User ${decodedToken.uid} is not an admin or profile does not exist.`);
     return null;
   } catch (error) {
     console.error('Error verifying admin user profile:', error);
