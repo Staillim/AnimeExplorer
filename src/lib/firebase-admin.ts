@@ -23,4 +23,5 @@ if (!admin.apps.length) {
     adminApp = admin.app();
 }
 
+// Export the initialized app
 export { adminApp };
