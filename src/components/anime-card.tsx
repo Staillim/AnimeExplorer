@@ -10,8 +10,8 @@ interface AnimeCardProps {
 }
 
 export default function AnimeCard({ anime }: AnimeCardProps) {
-  // Get unique languages available for the anime
-  const languages = Array.from(new Set(anime.seasons.map(s => s.language)));
+  // Get unique languages available for the anime, ensuring seasons exist.
+  const languages = Array.from(new Set((anime.seasons || []).map(s => s.language)));
 
   return (
     <Link href={`/anime/${anime.id}`} className="group block">
