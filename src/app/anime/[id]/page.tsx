@@ -186,7 +186,7 @@ export default function AnimeDetailPage() {
     
     return (
         <div className="w-full space-y-12">
-            <div className="relative w-full h-[60vh] -mt-8 -mx-4 sm:-mx-6 lg:-mx-8">
+            <div className="relative w-full h-[60vh] rounded-lg overflow-hidden">
                 <div className="absolute inset-0">
                     <Image
                         src={anime.bannerImage || anime.coverImage}
@@ -198,7 +198,7 @@ export default function AnimeDetailPage() {
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-background via-background/70 to-transparent" />
                 </div>
-                <div className="relative container mx-auto px-4 sm:px-6 lg:px-8 h-full flex flex-col md:flex-row items-end pb-12 gap-8">
+                <div className="relative h-full flex flex-col md:flex-row items-end pb-12 gap-8 p-4 md:p-8">
                     <div className="md:w-1/4 lg:w-1/5">
                         <div className="relative aspect-[2/3] w-full max-w-xs rounded-lg overflow-hidden shadow-2xl shadow-black/50 border-4 border-card/50">
                             <Image
@@ -238,7 +238,7 @@ export default function AnimeDetailPage() {
 
             {/* Reproductor y Lista de Capítulos */}
             {selectedChapter && selectedSeason && (
-                <div className="container mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+                <div className="space-y-8">
                     {/* Reproductor de Video */}
                     <div className="space-y-4">
                         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -304,7 +304,7 @@ export default function AnimeDetailPage() {
             
              {/* Recommended Animes */}
             {recommendedAnimes.length > 0 && (
-                <div className="container mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+                <div className="space-y-8">
                     <div className="space-y-4">
                       <h2 className="text-2xl font-bold font-headline glow-text text-primary-foreground">Recomendados</h2>
                       <Carousel opts={{ align: "start", dragFree: true }} className="w-full">
@@ -329,5 +329,4 @@ export default function AnimeDetailPage() {
             </div>
         </div>
     );
-
-    
+}
