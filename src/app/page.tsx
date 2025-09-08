@@ -169,7 +169,7 @@ export default function Home() {
                         <SelectValue placeholder="Todos" />
                     </SelectTrigger>
                     <SelectContent>
-                        <SelectItem value="">Todos</SelectItem>
+                        <SelectItem value="all">Todos</SelectItem>
                         {genres.map(genre => <SelectItem key={genre} value={genre}>{genre}</SelectItem>)}
                     </SelectContent>
                 </Select>
@@ -181,7 +181,7 @@ export default function Home() {
                         <SelectValue placeholder="Todos" />
                     </SelectTrigger>
                     <SelectContent>
-                        <SelectItem value="">Todos</SelectItem>
+                        <SelectItem value="all">Todos</SelectItem>
                         {years.map(year => <SelectItem key={year} value={String(year)}>{year}</SelectItem>)}
                     </SelectContent>
                 </Select>
@@ -252,4 +252,3 @@ export default function Home() {
     </div>
   );
 }
-
