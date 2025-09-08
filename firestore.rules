@@ -1,0 +1,56 @@
+
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+  
+    // Helper function to check for admin role
+    function isAdmin() {
+      return request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    // Rules for the 'animes' collection
+    match /animes/{animeId} {
+      // Anyone can read the anime data
+      allow read: if true;
+
+      // Only admins can create or delete anime documents
+      allow create, delete: if isAdmin();
+      
+      // Allow updates under specific conditions
+      allow update: if 
+        // Admins can update any field
+        isAdmin() ||
+        // ANY user (anonymous included) can update ONLY the 'views' field by exactly 1
+        (
+          request.resource.data.keys().hasAll(resource.data.keys()) &&
+          request.resource.data.keys().hasOnly(resource.data.keys().concat(['views'])) &&
+          request.resource.data.views == resource.data.views + 1
+        );
+    }
+
+    // Rules for the 'users' collection
+    match /users/{userId} {
+        // A user can read their own profile, admins can read any profile
+        allow read: if request.auth.uid == userId || isAdmin();
+        
+        // A user can create their own profile upon signup
+        allow create: if request.auth.uid == userId;
+
+        // A user can update their own profile, but cannot change their role.
+        // Admins can update any profile, including the role.
+        allow update: if (request.auth.uid == userId && request.resource.data.role == resource.data.role) || isAdmin();
+        
+        // Only admins can delete user profiles
+        allow delete: if isAdmin();
+    }
+    
+    // Rules for the 'ads' collection
+    match /ads/{adId} {
+      // Anyone can see the ads
+      allow read: if true;
+      // Only admins can create, update, or delete ads
+      allow write: if isAdmin();
+    }
+  }
+}
