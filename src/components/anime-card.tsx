@@ -4,6 +4,8 @@ import Image from 'next/image';
 import type { Anime } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
+import { doc, increment, updateDoc } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 
 interface AnimeCardProps {
   anime: Anime;
@@ -11,6 +13,20 @@ interface AnimeCardProps {
 
 export default function AnimeCard({ anime }: AnimeCardProps) {
   const languages = Array.from(new Set((anime.seasons || []).map(s => s.language)));
+
+  const handleCardClick = async () => {
+    const animeRef = doc(db, "animes", anime.id);
+    try {
+      // Increment the views field by 1 atomically.
+      // This is a server-side operation, safe and race-condition-free.
+      await updateDoc(animeRef, {
+        views: increment(1)
+      });
+    } catch (error) {
+      console.error("Error updating views: ", error);
+    }
+  };
+
 
   // Simple hash function to generate a number from a string for consistent styling
   const stringToHash = (str: string) => {
@@ -35,7 +51,7 @@ export default function AnimeCard({ anime }: AnimeCardProps) {
   ];
 
   return (
-    <Link href={`/anime/${anime.id}`} className="group relative block w-full h-full">
+    <Link href={`/anime/${anime.id}`} onClick={handleCardClick} className="group relative block w-full h-full">
       {/* Orb background effect */}
       <div 
         className={cn(

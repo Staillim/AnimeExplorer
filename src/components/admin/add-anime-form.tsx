@@ -67,6 +67,7 @@ const formSchema = z.object({
   rating: z.coerce.number().min(0).max(10),
   seasons: z.array(seasonSchema).min(1, { message: "Debes agregar al menos una temporada o película."}),
   dataAiHint: z.string().min(2, { message: "AI hint must be at least 2 characters." }),
+  views: z.number().optional(),
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -113,6 +114,7 @@ export function AddAnimeForm({ animeToEdit, onSuccess }: AddAnimeFormProps) {
           rating: 7.0,
           seasons: [getDefaultSeason()],
           dataAiHint: "anime",
+          views: 0,
         },
   });
 
@@ -160,6 +162,7 @@ export function AddAnimeForm({ animeToEdit, onSuccess }: AddAnimeFormProps) {
             genres: genresString,
             rating,
             dataAiHint,
+            views: 0,
             seasons: []
         });
 
@@ -222,6 +225,7 @@ export function AddAnimeForm({ animeToEdit, onSuccess }: AddAnimeFormProps) {
         bannerImage: values.bannerImage || `https://placehold.co/1200x400.png`,
         genres: genresArray,
         seasons: processedSeasons,
+        views: values.views ?? 0,
       };
 
       if (isEditMode) {
@@ -247,6 +251,7 @@ export function AddAnimeForm({ animeToEdit, onSuccess }: AddAnimeFormProps) {
           rating: 7.0,
           seasons: [getDefaultSeason()],
           dataAiHint: "anime",
+          views: 0,
         });
         setCode('');
       }
@@ -636,5 +641,3 @@ function SeasonField({ seasonIndex, removeSeason, totalSeasons }: { seasonIndex:
     </div>
   );
 }
-
-    

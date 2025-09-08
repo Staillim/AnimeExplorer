@@ -34,11 +34,13 @@ export default function Home() {
       try {
         const animesCollection = collection(db, 'animes');
         
+        // Fetch all animes ordered by most recent year
         const allDocsQuery = query(animesCollection, orderBy('year', 'desc'));
         const animeSnapshot = await getDocs(allDocsQuery);
         const allAnimes = animeSnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as Anime));
         
-        const trendingAnimes = [...allAnimes].sort((a,b) => b.rating - a.rating);
+        // Sort by views for trending, a new separate sorting
+        const trendingAnimes = [...allAnimes].sort((a,b) => (b.views || 0) - (a.views || 0));
 
         if(trendingAnimes.length > 0) {
             setHeroAnimes(trendingAnimes.slice(0, 5));
@@ -149,4 +151,3 @@ export default function Home() {
     </div>
   );
 }
-    

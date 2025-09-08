@@ -24,6 +24,7 @@ export interface Anime {
   genres: string[];
   year: number;
   rating: number;
+  views?: number;
   seasons: Season[];
 }
 
