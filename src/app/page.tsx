@@ -1,32 +1,58 @@
+
 "use client";
 
 import { useState, useMemo, useEffect } from 'react';
-import { collection, getDocs } from 'firebase/firestore';
+import { collection, getDocs, query, orderBy, limit } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { Anime } from '@/lib/types';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import AnimeCard from '@/components/anime-card';
-import { Search, ListFilter } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
+import { Clapperboard } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import Link from 'next/link';
+
+interface CarouselSection {
+  title: string;
+  animes: Anime[];
+}
 
 export default function Home() {
-  const [animes, setAnimes] = useState<Anime[]>([]);
-  const [genres, setGenres] = useState<string[]>(['All']);
+  const [sections, setSections] = useState<CarouselSection[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedGenre, setSelectedGenre] = useState('All');
+  const [heroAnime, setHeroAnime] = useState<Anime | null>(null);
 
   useEffect(() => {
     const fetchAnimes = async () => {
       try {
         const animesCollection = collection(db, 'animes');
-        const animeSnapshot = await getDocs(animesCollection);
-        const animeList = animeSnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as Anime));
-        setAnimes(animeList);
         
-        const allGenres = ['All', ...Array.from(new Set(animeList.flatMap(anime => anime.genres)))];
-        setGenres(allGenres);
+        // Fetch all animes
+        const allDocsQuery = query(animesCollection, orderBy('year', 'desc'));
+        const animeSnapshot = await getDocs(allDocsQuery);
+        const allAnimes = animeSnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as Anime));
+
+        if(allAnimes.length > 0) {
+            // Set a random hero anime
+            setHeroAnime(allAnimes[Math.floor(Math.random() * allAnimes.length)]);
+        }
+
+        const genres = ['Acción', 'Comedia', 'Drama', 'Fantasía', 'Sci-Fi'];
+
+        const sectionsData: CarouselSection[] = [
+          { title: 'Tendencias', animes: [...allAnimes].sort((a,b) => b.rating - a.rating).slice(0, 15) },
+          { title: 'Agregados Recientemente', animes: allAnimes.slice(0, 15) },
+        ];
+
+        genres.forEach(genre => {
+          const filtered = allAnimes.filter(a => a.genres.includes(genre));
+          if (filtered.length > 0) {
+            sectionsData.push({ title: genre, animes: filtered.slice(0, 15) });
+          }
+        });
+        
+        setSections(sectionsData);
+
       } catch (error) {
         console.error("Error fetching animes:", error);
       } finally {
@@ -37,70 +63,62 @@ export default function Home() {
     fetchAnimes();
   }, []);
 
-  const filteredAnimes = useMemo(() => {
-    return animes.filter(anime => {
-      const matchesGenre = selectedGenre === 'All' || anime.genres.includes(selectedGenre);
-      const matchesSearch = anime.title.toLowerCase().includes(searchTerm.toLowerCase());
-      return matchesGenre && matchesSearch;
-    });
-  }, [searchTerm, selectedGenre, animes]);
-
   return (
-    <div className="space-y-8">
-      <header className="text-center space-y-2">
-        <h1 className="text-4xl md:text-5xl font-bold font-headline text-primary">Anime Explorer</h1>
-        <p className="text-lg text-muted-foreground">Tu portal al universo del anime.</p>
-      </header>
-      
-      <div className="p-4 bg-card rounded-lg shadow-md border border-border sticky top-20 z-40">
-        <div className="flex flex-col md:flex-row gap-4">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-            <Input
-              type="text"
-              placeholder="Buscar por título..."
-              className="pl-10 bg-input border-0 focus:ring-accent"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              aria-label="Search for an anime"
-            />
-          </div>
-          <div className="relative flex-1 md:max-w-xs">
-            <ListFilter className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-            <Select onValueChange={setSelectedGenre} defaultValue={selectedGenre}>
-              <SelectTrigger className="pl-10 bg-input border-0 focus:ring-accent" aria-label="Filter by genre">
-                <SelectValue placeholder="Filtrar por género" />
-              </SelectTrigger>
-              <SelectContent>
-                {genres.map(genre => (
-                  <SelectItem key={genre} value={genre}>
-                    {genre}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-      </div>
-
+    <div className="space-y-12">
       {loading ? (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-x-4 gap-y-8">
-          {Array.from({ length: 12 }).map((_, i) => (
-            <Skeleton key={i} className="h-[300px] w-full rounded-lg" />
-          ))}
-        </div>
-      ) : filteredAnimes.length > 0 ? (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-x-4 gap-y-8">
-          {filteredAnimes.map(anime => (
-            <AnimeCard key={anime.id} anime={anime} />
-          ))}
-        </div>
-      ) : (
-        <div className="text-center py-16">
-          <p className="text-xl font-medium text-muted-foreground">No se encontraron animes.</p>
-          <p className="text-sm text-muted-foreground">Intenta ajustar tu búsqueda o filtros.</p>
+        <Skeleton className="h-[50vh] w-full rounded-lg" />
+      ) : heroAnime && (
+        <div className="relative h-[50vh] w-full flex items-end rounded-lg overflow-hidden p-8 text-white">
+            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent z-10"/>
+            <img src={heroAnime.bannerImage} alt={heroAnime.title} className="absolute inset-0 w-full h-full object-cover"/>
+            <div className="relative z-20 max-w-2xl space-y-4">
+                <h1 className="text-4xl md:text-5xl font-bold font-headline drop-shadow-lg">{heroAnime.title}</h1>
+                <p className="text-lg text-white/80 line-clamp-3">{heroAnime.description}</p>
+                <Button asChild size="lg">
+                    <Link href={`/anime/${heroAnime.id}`}>
+                        <Clapperboard className="mr-2" />
+                        Ver ahora
+                    </Link>
+                </Button>
+            </div>
         </div>
       )}
+      
+      <div className="space-y-12">
+        {loading ? (
+           Array.from({ length: 4 }).map((_, i) => (
+             <div key={i} className="space-y-4">
+                <Skeleton className="h-8 w-48" />
+                <div className="flex space-x-4">
+                  {Array.from({ length: 6 }).map((_, j) => (
+                     <Skeleton key={j} className="h-64 w-44 rounded-lg" />
+                  ))}
+                </div>
+             </div>
+           ))
+        ) : sections.length > 0 ? (
+          sections.map((section, index) => (
+            <div key={index} className="space-y-4">
+              <h2 className="text-2xl font-bold font-headline text-primary-foreground">{section.title}</h2>
+              <Carousel opts={{ align: "start", dragFree: true }} className="w-full">
+                <CarouselContent className="-ml-4">
+                  {section.animes.map(anime => (
+                    <CarouselItem key={anime.id} className="basis-1/2 sm:basis-1/3 md:basis-1/4 lg:basis-1/5 xl:basis-1/6 2xl:basis-1/7 pl-4">
+                      <AnimeCard anime={anime} />
+                    </CarouselItem>
+                  ))}
+                </CarouselContent>
+                 <CarouselPrevious className="absolute left-2 top-1/2 -translate-y-1/2 z-10 hidden md:flex" />
+                 <CarouselNext className="absolute right-2 top-1/2 -translate-y-1/2 z-10 hidden md:flex" />
+              </Carousel>
+            </div>
+          ))
+        ) : (
+          <div className="text-center py-16">
+            <p className="text-xl font-medium text-muted-foreground">No se encontraron animes.</p>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

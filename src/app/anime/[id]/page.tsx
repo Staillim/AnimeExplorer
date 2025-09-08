@@ -32,7 +32,6 @@ async function getAds(): Promise<Ad[]> {
     return adSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Ad));
 }
 
-
 export default function AnimeDetailPage() {
     const params = useParams();
     const animeId = Array.isArray(params.id) ? params.id[0] : params.id;
@@ -168,11 +167,21 @@ export default function AnimeDetailPage() {
     
     return (
         <div className="w-full space-y-12">
-            <div className="container mx-auto px-4 sm:px-6 lg:px-8 pt-8">
-                <div className="grid md:grid-cols-12 gap-8">
-                    {/* Columna de Portada */}
-                    <div className="md:col-span-4 lg:col-span-3">
-                        <div className="relative aspect-[2/3] w-full max-w-xs mx-auto rounded-lg overflow-hidden shadow-2xl shadow-black/50 border-4 border-card/50">
+            <div className="relative w-full h-[60vh] -mt-8 -mx-4 sm:-mx-6 lg:-mx-8">
+                <div className="absolute inset-0">
+                    <Image
+                        src={anime.bannerImage || anime.coverImage}
+                        alt={`Banner for ${anime.title}`}
+                        data-ai-hint={anime.dataAiHint}
+                        fill
+                        className="object-cover"
+                        priority
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-background via-background/70 to-transparent" />
+                </div>
+                <div className="relative container mx-auto px-4 sm:px-6 lg:px-8 h-full flex flex-col md:flex-row items-end pb-12 gap-8">
+                    <div className="md:w-1/4 lg:w-1/5">
+                        <div className="relative aspect-[2/3] w-full max-w-xs rounded-lg overflow-hidden shadow-2xl shadow-black/50 border-4 border-card/50">
                             <Image
                                 src={anime.coverImage}
                                 alt={`Cover of ${anime.title}`}
@@ -182,33 +191,26 @@ export default function AnimeDetailPage() {
                             />
                         </div>
                     </div>
-                    {/* Columna de Información */}
-                    <div className="md:col-span-8 lg:col-span-9 space-y-6">
-                        <div className="space-y-4">
-                            <h1 className="text-4xl lg:text-5xl font-bold font-headline text-primary-foreground drop-shadow-lg">{anime.title}</h1>
-                            <div className="flex items-center flex-wrap gap-x-4 gap-y-2 text-muted-foreground">
-                                <div className="flex items-center gap-1.5 text-amber-400">
-                                    <Star className="w-5 h-5 fill-current" />
-                                    <span className="font-bold text-lg">{anime.rating}</span>
-                                </div>
-                                <div className="flex items-center gap-1.5">
-                                    <Tv className="w-4 h-4" />
-                                    <span>{anime.seasons.length} Temporada(s)</span>
-                                </div>
-                                <div className="flex items-center gap-1.5">
-                                    <Calendar className="w-4 h-4" />
-                                    <span>{anime.year}</span>
-                                </div>
+                    <div className="md:w-3/4 lg:w-4/5 space-y-4">
+                        <h1 className="text-4xl lg:text-6xl font-bold font-headline text-primary-foreground drop-shadow-lg">{anime.title}</h1>
+                        <div className="flex items-center flex-wrap gap-x-4 gap-y-2 text-muted-foreground">
+                            <div className="flex items-center gap-1.5 text-amber-400">
+                                <Star className="w-5 h-5 fill-current" />
+                                <span className="font-bold text-lg">{anime.rating}</span>
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                                <Tv className="w-4 h-4" />
+                                <span>{anime.seasons.length} Temporada(s)</span>
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                                <Calendar className="w-4 h-4" />
+                                <span>{anime.year}</span>
                             </div>
                         </div>
-
-                        <div>
-                            <p className="text-foreground/80 leading-relaxed max-w-3xl">{anime.description}</p>
-                        </div>
-
-                        <div className="flex flex-wrap gap-2">
+                        <p className="text-foreground/80 leading-relaxed max-w-3xl line-clamp-3">{anime.description}</p>
+                         <div className="flex flex-wrap gap-2">
                             {anime.genres.map((genre) => (
-                                <Badge key={genre} variant="secondary" className="text-sm">{genre}</Badge>
+                                <Badge key={genre} variant="secondary" className="text-sm backdrop-blur-sm">{genre}</Badge>
                             ))}
                         </div>
                     </div>
@@ -239,7 +241,7 @@ export default function AnimeDetailPage() {
                               </Select>
                            )}
                         </div>
-                        <div className="relative aspect-video bg-black rounded-lg overflow-hidden shadow-2xl shadow-primary/20 border-2 border-primary/50">
+                        <div className="relative aspect-video bg-black rounded-lg overflow-hidden shadow-2xl shadow-primary/20 ring-2 ring-primary/30">
                            { isPlayerLocked && randomAd && (
                                 <PlayerAdOverlay adUrl={randomAd.url} onComplete={handleAdComplete} />
                            )}
@@ -256,26 +258,28 @@ export default function AnimeDetailPage() {
                     </div>
 
                     {/* Lista de Capítulos */}
-                    <div className="space-y-4">
-                        <h2 className="text-3xl font-bold font-headline">Capítulos de {selectedSeason.title} ({selectedSeason.language.toUpperCase()})</h2>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                            {selectedSeason.chapters.map((chapter, index) => (
-                                <button
-                                    key={index}
-                                    onClick={() => handleChapterSelect(index)}
-                                    className={`flex items-center p-3 rounded-lg hover:bg-secondary transition-colors group text-left w-full ${selectedChapterIndex === index ? 'bg-primary/20 ring-2 ring-primary' : 'bg-card/50'}`}
-                                >
-                                    <PlayCircle className={`w-10 h-10 transition-colors ${selectedChapterIndex === index ? 'text-primary' : 'text-primary/50 group-hover:text-primary'}`}/>
-                                    <div className="ml-4 overflow-hidden">
-                                        <p className={`font-semibold text-lg truncate transition-colors ${selectedChapterIndex === index ? 'text-primary-foreground' : 'text-foreground group-hover:text-primary-foreground'}`}>
-                                            {chapter.title || `Capítulo ${index + 1}`}
-                                        </p>
-                                        <span className="text-sm text-muted-foreground">Reproducir ahora</span>
-                                    </div>
-                                </button>
-                            ))}
+                     {selectedSeason.chapters.length > 1 && (
+                        <div className="space-y-4">
+                            <h2 className="text-3xl font-bold font-headline">Capítulos de {selectedSeason.title} ({selectedSeason.language.toUpperCase()})</h2>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                                {selectedSeason.chapters.map((chapter, index) => (
+                                    <button
+                                        key={index}
+                                        onClick={() => handleChapterSelect(index)}
+                                        className={`flex items-center p-3 rounded-lg hover:bg-secondary transition-colors group text-left w-full ${selectedChapterIndex === index ? 'bg-primary/20 ring-2 ring-primary' : 'bg-card/50'}`}
+                                    >
+                                        <PlayCircle className={`w-10 h-10 transition-colors ${selectedChapterIndex === index ? 'text-primary' : 'text-primary/50 group-hover:text-primary'}`}/>
+                                        <div className="ml-4 overflow-hidden">
+                                            <p className={`font-semibold text-lg truncate transition-colors ${selectedChapterIndex === index ? 'text-primary-foreground' : 'text-foreground group-hover:text-primary-foreground'}`}>
+                                                {chapter.title || `Capítulo ${index + 1}`}
+                                            </p>
+                                            <span className="text-sm text-muted-foreground">Reproducir ahora</span>
+                                        </div>
+                                    </button>
+                                ))}
+                            </div>
                         </div>
-                    </div>
+                     )}
                 </div>
             )}
 
