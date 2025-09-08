@@ -3,45 +3,31 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Regla para la colección de usuarios
-    // Los usuarios autenticados pueden leer y actualizar su propio perfil.
-    // Los usuarios autenticados pueden crear su propio perfil.
-    // Nadie puede cambiar su propio rol; solo un admin podría hacerlo (regla implícita).
+    function isSame(map1, map2) {
+      return map1.keys().hasAll(map2.keys()) && map1.keys().hasOnly(map2.keys());
+    }
+
+    function isUpdatingSingleField(fieldName) {
+      let changedKeys = request.resource.data.diff(resource.data).affectedKeys;
+      return changedKeys.size() == 1 && changedKeys.has(fieldName);
+    }
+    
     match /users/{userId} {
-      allow read, update: if request.auth != null && request.auth.uid == userId
-                    && request.resource.data.role == resource.data.role; // Impide que el usuario cambie su propio rol
+      allow read, update: if request.auth != null && request.auth.uid == userId;
       allow create: if request.auth != null;
     }
 
-    // Regla para la colección de animes
     match /animes/{animeId} {
-      // Cualquiera puede leer los datos de los animes.
       allow read: if true;
-      
-      // Solo los administradores pueden crear y eliminar documentos de animes.
       allow create, delete: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
-
-      // Regla de actualización:
-      // - Un administrador puede actualizar cualquier campo.
-      // - CUALQUIER persona puede actualizar el documento si se cumplen dos condiciones:
-      //   1. El campo 'views' se incrementa exactamente en 1.
-      //   2. Ningún otro campo modificable ha cambiado.
+      
       allow update: if (request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin')
                     || (
-                      request.resource.data.views == resource.data.views + 1 &&
-                      request.resource.data.title == resource.data.title &&
-                      request.resource.data.description == resource.data.description &&
-                      request.resource.data.coverImage == resource.data.coverImage &&
-                      request.resource.data.year == resource.data.year &&
-                      request.resource.data.rating == resource.data.rating &&
-                      request.resource.data.genres == resource.data.genres &&
-                      request.resource.data.seasons == resource.data.seasons
+                      isUpdatingSingleField('views') &&
+                      request.resource.data.views == resource.data.views + 1
                     );
     }
 
-    // Regla para la colección de anuncios
-    // Cualquiera puede leer los anuncios.
-    // Solo los administradores pueden gestionar (crear, actualizar, eliminar) los anuncios.
     match /ads/{adId} {
       allow read: if true;
       allow write: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
