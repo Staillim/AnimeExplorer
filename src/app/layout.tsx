@@ -8,8 +8,8 @@ import Footer from '@/components/common/footer';
 import { AuthProvider } from '@/context/auth-context';
 
 export const metadata: Metadata = {
-  title: 'Anime Explorer',
-  description: 'Explore a world of anime.',
+  title: 'PlayWave',
+  description: 'Explore a world of content.',
 };
 
 const Orb = ({ className, animation }: { className: string; animation: string }) => (

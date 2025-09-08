@@ -31,7 +31,7 @@ export default function Header() {
           <Link href="/" className="flex items-center gap-2 group">
             <Clapperboard className="h-8 w-8 text-primary group-hover:animate-pulse" />
             <span className="text-lg sm:text-xl font-bold font-headline tracking-tight group-hover:glow-text transition-all duration-300">
-              Anime Explorer
+              PlayWave
             </span>
           </Link>
           <nav className="flex items-center gap-1 sm:gap-2">

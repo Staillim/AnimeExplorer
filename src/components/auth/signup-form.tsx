@@ -71,7 +71,7 @@ export function SignupForm({ onSuccess }: SignupFormProps) {
       
       toast({
         title: "Account Created",
-        description: "Welcome to Anime Explorer!",
+        description: "Welcome to PlayWave!",
       });
       onSuccess();
     } catch (error: any) {

@@ -8,7 +8,7 @@ export default function Footer() {
         <div className="flex justify-between items-center text-sm text-muted-foreground">
           <div className="flex items-center gap-2">
             <Clapperboard className="h-5 w-5 text-primary" />
-            <span className="font-bold">Anime Explorer</span>
+            <span className="font-bold">PlayWave</span>
           </div>
           <p>&copy; {new Date().getFullYear()} Todos los derechos reservados.</p>
         </div>

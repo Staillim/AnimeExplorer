@@ -20,7 +20,7 @@ export default function LoginPage() {
       <div className="mx-auto grid w-[400px] gap-6">
         <div className="grid gap-2 text-center">
           <Clapperboard className="h-12 w-12 text-primary mx-auto" />
-          <h1 className="text-3xl font-bold font-headline">Welcome to Anime Explorer</h1>
+          <h1 className="text-3xl font-bold font-headline">Welcome to PlayWave</h1>
           <p className="text-balance text-muted-foreground">
             {activeTab === 'login' ? 'Log in to continue' : 'Create an account to get started'}
           </p>
