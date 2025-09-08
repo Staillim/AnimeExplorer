@@ -200,9 +200,9 @@ export default function AnimeDetailPage() {
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-background via-background/70 to-transparent" />
                 </div>
-                <div className="relative h-full flex flex-col md:flex-row items-end pb-12 gap-8 p-4 md:p-8">
-                    <div className="md:w-1/4 lg:w-1/5">
-                        <div className="relative aspect-[2/3] w-full max-w-xs rounded-lg overflow-hidden shadow-2xl shadow-black/50 border-4 border-card/50">
+                <div className="relative h-full flex flex-row items-end pb-12 gap-6 p-4 md:p-8">
+                    <div className="w-1/3 sm:w-1/4 md:w-1/4 lg:w-1/5 flex-shrink-0">
+                        <div className="relative aspect-[2/3] w-full rounded-lg overflow-hidden shadow-2xl shadow-black/50 border-4 border-card/50">
                             <Image
                                 src={anime.coverImage}
                                 alt={`Cover of ${anime.title}`}
@@ -212,26 +212,26 @@ export default function AnimeDetailPage() {
                             />
                         </div>
                     </div>
-                    <div className="md:w-3/4 lg:w-4/5 space-y-4">
-                        <h1 className="text-4xl lg:text-6xl font-bold font-headline glow-text text-primary-foreground drop-shadow-lg">{anime.title}</h1>
-                        <div className="flex items-center flex-wrap gap-x-4 gap-y-2 text-muted-foreground">
+                    <div className="w-2/3 sm:w-3/4 md:w-3/4 lg:w-4/5 space-y-2 md:space-y-4">
+                        <h1 className="text-xl sm:text-2xl md:text-4xl lg:text-6xl font-bold font-headline glow-text text-primary-foreground drop-shadow-lg">{anime.title}</h1>
+                        <div className="flex items-center flex-wrap gap-x-2 md:gap-x-4 gap-y-2 text-muted-foreground">
                             <div className="flex items-center gap-1.5 text-amber-400">
-                                <Star className="w-5 h-5 fill-current" />
-                                <span className="font-bold text-lg">{anime.rating}</span>
+                                <Star className="w-4 h-4 md:w-5 md:h-5 fill-current" />
+                                <span className="font-bold text-sm md:text-lg">{anime.rating}</span>
                             </div>
                             <div className="flex items-center gap-1.5">
-                                <Tv className="w-4 h-4" />
-                                <span>{anime.seasons.length} Temporada(s)</span>
+                                <Tv className="w-3 h-3 md:w-4 md:h-4" />
+                                <span className="text-xs md:text-base">{anime.seasons.length} Temporada(s)</span>
                             </div>
                             <div className="flex items-center gap-1.5">
-                                <Calendar className="w-4 h-4" />
-                                <span>{anime.year}</span>
+                                <Calendar className="w-3 h-3 md:w-4 md:h-4" />
+                                <span className="text-xs md:text-base">{anime.year}</span>
                             </div>
                         </div>
-                        <p className="text-foreground/80 leading-relaxed max-w-3xl line-clamp-3">{anime.description}</p>
-                         <div className="flex flex-wrap gap-2">
+                        <p className="text-foreground/80 leading-relaxed max-w-3xl line-clamp-2 md:line-clamp-3 text-xs sm:text-sm md:text-base">{anime.description}</p>
+                         <div className="flex flex-wrap gap-2 pt-2">
                             {anime.genres.map((genre) => (
-                                <Badge key={genre} variant="secondary" className="text-sm backdrop-blur-sm">{genre}</Badge>
+                                <Badge key={genre} variant="secondary" className="text-xs md:text-sm backdrop-blur-sm">{genre}</Badge>
                             ))}
                         </div>
                     </div>
@@ -343,5 +343,3 @@ export default function AnimeDetailPage() {
         </div>
     );
 }
-
-    
