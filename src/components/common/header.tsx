@@ -15,9 +15,13 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Skeleton } from "../ui/skeleton";
+import { Sheet, SheetContent, SheetTrigger } from "../ui/sheet";
+import { Input } from "../ui/input";
+import { useSearch } from "@/context/search-context";
 
 export default function Header() {
   const { user, userProfile, loading, logout } = useAuth();
+  const { searchQuery, setSearchQuery } = useSearch();
 
   const getInitials = (name?: string | null) => {
     if (!name) return "U";
@@ -35,13 +39,31 @@ export default function Header() {
             </span>
           </Link>
           <nav className="flex items-center gap-1 sm:gap-2">
-             <Button asChild variant="ghost" size="icon">
-                <Link href="#">
-                  <Search className="h-5 w-5" />
-                   <span className="sr-only">Buscar</span>
-                </Link>
-              </Button>
-             {userProfile?.role === 'admin' && (
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button asChild variant="ghost" size="icon">
+                  <Link href="#">
+                    <Search className="h-5 w-5" />
+                    <span className="sr-only">Buscar</span>
+                  </Link>
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="top" className="p-4">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                  <Input
+                    type="text"
+                    placeholder="Buscar por título, género, año..."
+                    className="w-full bg-input border-0 pl-10 text-lg h-14"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    aria-label="Search"
+                  />
+                </div>
+              </SheetContent>
+            </Sheet>
+            
+            {userProfile?.role === 'admin' && (
               <Button asChild variant="ghost">
                 <Link href="/admin">
                   <ShieldCheck className="h-5 w-5" />

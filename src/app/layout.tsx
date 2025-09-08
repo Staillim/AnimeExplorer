@@ -6,6 +6,7 @@ import { Toaster } from '@/components/ui/toaster';
 import Header from '@/components/common/header';
 import Footer from '@/components/common/footer';
 import { AuthProvider } from '@/context/auth-context';
+import { SearchProvider } from '@/context/search-context';
 
 export const metadata: Metadata = {
   title: 'PlayWave',
@@ -44,12 +45,14 @@ export default function RootLayout({
         </div>
         
         <AuthProvider>
-          <Header />
-          <main className="flex-grow container mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            {children}
-          </main>
-          <Footer />
-          <Toaster />
+          <SearchProvider>
+            <Header />
+            <main className="flex-grow container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+              {children}
+            </main>
+            <Footer />
+            <Toaster />
+          </SearchProvider>
         </AuthProvider>
       </body>
     </html>
