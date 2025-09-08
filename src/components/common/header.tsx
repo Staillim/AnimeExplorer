@@ -30,7 +30,7 @@ export default function Header() {
         <div className="flex h-16 items-center justify-between">
           <Link href="/" className="flex items-center gap-2 group">
             <Clapperboard className="h-8 w-8 text-primary group-hover:animate-pulse" />
-            <span className="text-xl font-bold font-headline tracking-tight hidden sm:block group-hover:glow-text transition-all duration-300">
+            <span className="text-lg sm:text-xl font-bold font-headline tracking-tight group-hover:glow-text transition-all duration-300">
               Anime Explorer
             </span>
           </Link>
