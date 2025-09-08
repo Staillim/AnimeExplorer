@@ -8,7 +8,6 @@ import { doc, getDoc, updateDoc, getDocs, collection } from 'firebase/firestore'
 import { db } from '@/lib/firebase';
 import type { Anime, Ad, Season } from '@/lib/types';
 import { useAuth } from '@/context/auth-context';
-import { Badge } from '@/components/ui/badge';
 import { Star, Calendar, Tv, PlayCircle, Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
@@ -229,11 +228,10 @@ export default function AnimeDetailPage() {
                             </div>
                         </div>
                         <p className="text-foreground/80 leading-relaxed max-w-3xl line-clamp-2 md:line-clamp-3 text-xs sm:text-sm md:text-base">{anime.description}</p>
-                         <div className="flex flex-wrap gap-2 pt-1">
-                            {anime.genres.map((genre) => (
-                                <Badge key={genre} variant="secondary" className="text-xs md:text-sm backdrop-blur-sm">{genre}</Badge>
-                            ))}
-                        </div>
+                        <p className="text-sm text-muted-foreground pt-1">
+                          <span className="font-semibold text-foreground/90">Géneros: </span>
+                          {anime.genres.join(', ')}
+                        </p>
                     </div>
                 </div>
             </div>
