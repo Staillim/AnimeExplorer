@@ -35,12 +35,6 @@ export default function Header() {
             </span>
           </Link>
           <nav className="flex items-center gap-1 sm:gap-2">
-            <Button asChild variant="ghost">
-              <Link href="/">
-                <Home className="h-5 w-5" />
-                <span className="hidden md:inline ml-2">Catálogo</span>
-              </Link>
-            </Button>
              {userProfile?.role === 'admin' && (
               <Button asChild variant="ghost">
                 <Link href="/admin">
