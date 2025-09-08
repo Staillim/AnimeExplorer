@@ -2,7 +2,7 @@
 "use client";
 
 import Link from "next/link";
-import { Clapperboard, Home, WandSparkles, LogIn, User, ShieldCheck, LogOut } from "lucide-react";
+import { Clapperboard, Home, WandSparkles, LogIn, User, ShieldCheck, LogOut, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/auth-context";
 import {
@@ -35,6 +35,12 @@ export default function Header() {
             </span>
           </Link>
           <nav className="flex items-center gap-1 sm:gap-2">
+             <Button asChild variant="ghost" size="icon">
+                <Link href="#">
+                  <Search className="h-5 w-5" />
+                   <span className="sr-only">Buscar</span>
+                </Link>
+              </Button>
              {userProfile?.role === 'admin' && (
               <Button asChild variant="ghost">
                 <Link href="/admin">
