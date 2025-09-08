@@ -28,6 +28,10 @@ body {
     --input: 257 40% 12%;
     --ring: 220 90% 70%;
     --radius: 0.5rem;
+
+    --card-glow: 257 80% 75%;
+    --card-gradient-start: hsl(257, 80%, 65%);
+    --card-gradient-end: hsl(220, 90%, 70%);
   }
   .dark {
     --background: 257 40% 4%;
@@ -49,6 +53,10 @@ body {
     --border: 257 40% 15%;
     --input: 257 40% 12%;
     --ring: 220 90% 70%;
+
+    --card-glow: 257 80% 75%;
+    --card-gradient-start: hsl(257, 80%, 65%);
+    --card-gradient-end: hsl(220, 90%, 70%);
   }
 }
 
