@@ -14,6 +14,9 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import PlayerAdOverlay from '@/components/player-ad-overlay';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
+import AnimeCard from '@/components/anime-card';
+
 
 const FIFTEEN_MINUTES_IN_MS = 15 * 60 * 1000;
 
@@ -32,6 +35,13 @@ async function getAds(): Promise<Ad[]> {
     return adSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Ad));
 }
 
+async function getAllAnimes(): Promise<Anime[]> {
+    const animesCollection = collection(db, 'animes');
+    const animeSnapshot = await getDocs(animesCollection);
+    return animeSnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as Anime));
+}
+
+
 export default function AnimeDetailPage() {
     const params = useParams();
     const animeId = Array.isArray(params.id) ? params.id[0] : params.id;
@@ -40,6 +50,7 @@ export default function AnimeDetailPage() {
     
     const [anime, setAnime] = useState<Anime | null>(null);
     const [ads, setAds] = useState<Ad[]>([]);
+    const [recommendedAnimes, setRecommendedAnimes] = useState<Anime[]>([]);
     const [loading, setLoading] = useState(true);
     const [selectedSeasonIndex, setSelectedSeasonIndex] = useState(0);
     const [selectedChapterIndex, setSelectedChapterIndex] = useState(0);
@@ -85,11 +96,19 @@ export default function AnimeDetailPage() {
 
         Promise.all([
             getAnime(animeId),
-            getAds()
-        ]).then(([animeData, adsData]) => {
+            getAds(),
+            getAllAnimes()
+        ]).then(([animeData, adsData, allAnimes]) => {
             if (animeData) {
                 setAnime(animeData);
                 setAds(adsData);
+
+                // Set recommended animes
+                const recommendations = allAnimes.filter(a => 
+                    a.id !== animeData.id && a.genres.some(g => animeData.genres.includes(g))
+                ).slice(0, 15);
+                setRecommendedAnimes(recommendations);
+                
                 if (userProfile?.watchProgress && userProfile.watchProgress[animeId] !== undefined) {
                     const { seasonIndex: lastSeason, chapterIndex: lastChapter } = userProfile.watchProgress[animeId];
                     if(lastSeason < animeData.seasons.length && lastChapter < animeData.seasons[lastSeason].chapters.length) {
@@ -282,6 +301,26 @@ export default function AnimeDetailPage() {
                      )}
                 </div>
             )}
+            
+             {/* Recommended Animes */}
+            {recommendedAnimes.length > 0 && (
+                <div className="container mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+                    <div className="space-y-4">
+                      <h2 className="text-2xl font-bold font-headline text-primary-foreground">Recomendados</h2>
+                      <Carousel opts={{ align: "start", dragFree: true }} className="w-full">
+                        <CarouselContent className="-ml-4">
+                          {recommendedAnimes.map(recAnime => (
+                            <CarouselItem key={recAnime.id} className="basis-1/2 sm:basis-1/3 md:basis-1/4 lg:basis-1/5 xl:basis-1/6 2xl:basis-1/7 pl-4">
+                              <AnimeCard anime={recAnime} />
+                            </CarouselItem>
+                          ))}
+                        </CarouselContent>
+                         <CarouselPrevious className="absolute left-2 top-1/2 -translate-y-1/2 z-10 hidden md:flex" />
+                         <CarouselNext className="absolute right-2 top-1/2 -translate-y-1/2 z-10 hidden md:flex" />
+                      </Carousel>
+                    </div>
+                </div>
+            )}
 
             <div className="pt-8 pb-8 text-center">
                 <Button asChild size="lg" variant="outline">
@@ -290,4 +329,5 @@ export default function AnimeDetailPage() {
             </div>
         </div>
     );
-}
+
+    
