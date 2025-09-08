@@ -1,8 +1,9 @@
+
 import { Clapperboard } from "lucide-react";
 
 export default function Footer() {
   return (
-    <footer className="bg-background border-t border-border/50 mt-auto">
+    <footer className="bg-transparent border-t border-border/20 mt-auto">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4">
         <div className="flex justify-between items-center text-sm text-muted-foreground">
           <div className="flex items-center gap-2">

@@ -70,13 +70,13 @@ export default function AdminPage() {
   return (
     <div className="space-y-8">
       <header className="text-center space-y-2">
-        <h1 className="text-4xl md:text-5xl font-bold font-headline text-primary">Panel de Administración</h1>
+        <h1 className="text-4xl md:text-5xl font-bold font-headline glow-text text-primary">Panel de Administración</h1>
         <p className="text-lg text-muted-foreground">Gestiona el catálogo de contenido y anuncios.</p>
       </header>
       
       <Accordion type="single" collapsible className="w-full" defaultValue="anime-list">
         <AccordionItem value="add-anime">
-          <AccordionTrigger className="text-2xl font-headline">Agregar Nuevo Contenido</AccordionTrigger>
+          <AccordionTrigger className="text-2xl font-headline hover:text-primary transition-colors">Agregar Nuevo Contenido</AccordionTrigger>
           <AccordionContent>
             <div className="max-w-4xl mx-auto pt-4">
               <AddAnimeForm />
@@ -84,7 +84,7 @@ export default function AdminPage() {
           </AccordionContent>
         </AccordionItem>
         <AccordionItem value="anime-list">
-          <AccordionTrigger className="text-2xl font-headline">Catálogo Existente</AccordionTrigger>
+          <AccordionTrigger className="text-2xl font-headline hover:text-primary transition-colors">Catálogo Existente</AccordionTrigger>
           <AccordionContent>
              <div className="max-w-6xl mx-auto pt-4">
                {loadingData ? (
@@ -98,7 +98,7 @@ export default function AdminPage() {
           </AccordionContent>
         </AccordionItem>
          <AccordionItem value="ad-management">
-          <AccordionTrigger className="text-2xl font-headline">Gestionar Anuncios</AccordionTrigger>
+          <AccordionTrigger className="text-2xl font-headline hover:text-primary transition-colors">Gestionar Anuncios</AccordionTrigger>
           <AccordionContent>
              <div className="max-w-4xl mx-auto pt-4">
               {loadingData ? (

@@ -211,7 +211,7 @@ export default function AnimeDetailPage() {
                         </div>
                     </div>
                     <div className="md:w-3/4 lg:w-4/5 space-y-4">
-                        <h1 className="text-4xl lg:text-6xl font-bold font-headline text-primary-foreground drop-shadow-lg">{anime.title}</h1>
+                        <h1 className="text-4xl lg:text-6xl font-bold font-headline glow-text text-primary-foreground drop-shadow-lg">{anime.title}</h1>
                         <div className="flex items-center flex-wrap gap-x-4 gap-y-2 text-muted-foreground">
                             <div className="flex items-center gap-1.5 text-amber-400">
                                 <Star className="w-5 h-5 fill-current" />
@@ -242,12 +242,12 @@ export default function AnimeDetailPage() {
                     {/* Reproductor de Video */}
                     <div className="space-y-4">
                         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                           <h2 className="text-2xl font-bold font-headline text-primary">
+                           <h2 className="text-2xl font-bold font-headline glow-text text-primary">
                                 Viendo: {selectedSeason.title} - {selectedChapter.title || `Capítulo ${selectedChapterIndex + 1}`}
                            </h2>
                            {anime.seasons.length > 1 && (
                               <Select onValueChange={(value) => handleSeasonSelect(Number(value))} value={String(selectedSeasonIndex)}>
-                                <SelectTrigger className="w-full md:w-[280px] bg-card border-border">
+                                <SelectTrigger className="w-full md:w-[280px]">
                                   <SelectValue placeholder="Seleccionar temporada" />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -279,7 +279,7 @@ export default function AnimeDetailPage() {
                     {/* Lista de Capítulos */}
                      {selectedSeason.chapters.length > 1 && (
                         <div className="space-y-4">
-                            <h2 className="text-3xl font-bold font-headline">Capítulos de {selectedSeason.title} ({selectedSeason.language.toUpperCase()})</h2>
+                            <h2 className="text-3xl font-bold font-headline glow-text">Capítulos de {selectedSeason.title} ({selectedSeason.language.toUpperCase()})</h2>
                             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                                 {selectedSeason.chapters.map((chapter, index) => (
                                     <button
@@ -306,7 +306,7 @@ export default function AnimeDetailPage() {
             {recommendedAnimes.length > 0 && (
                 <div className="container mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
                     <div className="space-y-4">
-                      <h2 className="text-2xl font-bold font-headline text-primary-foreground">Recomendados</h2>
+                      <h2 className="text-2xl font-bold font-headline glow-text text-primary-foreground">Recomendados</h2>
                       <Carousel opts={{ align: "start", dragFree: true }} className="w-full">
                         <CarouselContent className="-ml-4">
                           {recommendedAnimes.map(recAnime => (
@@ -329,5 +329,4 @@ export default function AnimeDetailPage() {
             </div>
         </div>
     );
-
-    
+}
