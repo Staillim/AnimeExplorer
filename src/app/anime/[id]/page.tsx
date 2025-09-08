@@ -8,7 +8,7 @@ import { doc, getDoc, updateDoc, getDocs, collection } from 'firebase/firestore'
 import { db } from '@/lib/firebase';
 import type { Anime, Ad, Season } from '@/lib/types';
 import { useAuth } from '@/context/auth-context';
-import { Star, Calendar, Tv, PlayCircle, Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Star, Calendar, Tv, PlayCircle, Loader2, ChevronLeft, ChevronRight, Film } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import PlayerAdOverlay from '@/components/player-ad-overlay';
@@ -58,7 +58,7 @@ export default function AnimeDetailPage() {
     
     const selectedSeason = anime?.seasons[selectedSeasonIndex];
     const selectedChapter = selectedSeason?.chapters[selectedChapterIndex];
-    const isMovie = selectedSeason?.type === 'movie';
+    const isMovie = useMemo(() => anime?.seasons?.[0]?.type === 'movie', [anime]);
 
     const randomAd = useMemo(() => {
         if (ads.length === 0) return null;
@@ -219,8 +219,10 @@ export default function AnimeDetailPage() {
                                 <span className="font-bold text-sm md:text-lg">{anime.rating}</span>
                             </div>
                             <div className="flex items-center gap-1.5">
-                                <Tv className="w-3 h-3 md:w-4 md:h-4" />
-                                <span className="text-xs md:text-base">{anime.seasons.length} Temporada(s)</span>
+                                {isMovie ? <Film className="w-3 h-3 md:w-4 md:h-4" /> : <Tv className="w-3 h-3 md:w-4 md:h-4" />}
+                                <span className="text-xs md:text-base">
+                                  {isMovie ? 'Película' : `${anime.seasons.length} Temporada(s)`}
+                                </span>
                             </div>
                             <div className="flex items-center gap-1.5">
                                 <Calendar className="w-3 h-3 md:w-4 md:h-4" />
@@ -244,7 +246,7 @@ export default function AnimeDetailPage() {
                            <h2 className="text-2xl font-bold font-headline glow-text text-primary">
                                 {isMovie ? `Viendo: ${anime.title}` : `Viendo: ${selectedSeason.title}`}
                            </h2>
-                           {anime.seasons.length > 1 && (
+                           {!isMovie && anime.seasons.length > 1 && (
                               <Select onValueChange={(value) => handleSeasonSelect(Number(value))} value={String(selectedSeasonIndex)}>
                                 <SelectTrigger className="w-full md:w-[280px]">
                                   <SelectValue placeholder="Seleccionar temporada" />
@@ -341,3 +343,5 @@ export default function AnimeDetailPage() {
         </div>
     );
 }
+
+    
