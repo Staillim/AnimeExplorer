@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { collection, getDocs, query, orderBy } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { Anime } from '@/lib/types';
@@ -11,6 +11,8 @@ import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious
 import { Clapperboard } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
+import Autoplay from "embla-carousel-autoplay";
+
 
 interface CarouselSection {
   title: string;
@@ -20,7 +22,11 @@ interface CarouselSection {
 export default function Home() {
   const [sections, setSections] = useState<CarouselSection[]>([]);
   const [loading, setLoading] = useState(true);
-  const [heroAnime, setHeroAnime] = useState<Anime | null>(null);
+  const [heroAnimes, setHeroAnimes] = useState<Anime[]>([]);
+
+  const autoplayPlugin = useRef(
+    Autoplay({ delay: 5000, stopOnInteraction: true })
+  );
 
   useEffect(() => {
     const fetchAnimes = async () => {
@@ -30,15 +36,17 @@ export default function Home() {
         const allDocsQuery = query(animesCollection, orderBy('year', 'desc'));
         const animeSnapshot = await getDocs(allDocsQuery);
         const allAnimes = animeSnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as Anime));
+        
+        const trendingAnimes = [...allAnimes].sort((a,b) => b.rating - a.rating);
 
-        if(allAnimes.length > 0) {
-            setHeroAnime(allAnimes[Math.floor(Math.random() * allAnimes.length)]);
+        if(trendingAnimes.length > 0) {
+            setHeroAnimes(trendingAnimes.slice(0, 5));
         }
 
         const genres = ['Acción', 'Comedia', 'Drama', 'Fantasía', 'Sci-Fi'];
 
         const sectionsData: CarouselSection[] = [
-          { title: 'Tendencias', animes: [...allAnimes].sort((a,b) => b.rating - a.rating).slice(0, 15) },
+          { title: 'Tendencias', animes: trendingAnimes.slice(0, 15) },
           { title: 'Agregados Recientemente', animes: allAnimes.slice(0, 15) },
         ];
 
@@ -65,21 +73,34 @@ export default function Home() {
     <div className="space-y-12">
       {loading ? (
         <Skeleton className="h-[50vh] w-full rounded-lg bg-muted/50" />
-      ) : heroAnime && (
-        <div className="relative h-[50vh] w-full flex items-end rounded-lg overflow-hidden p-8 text-white">
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent z-10"/>
-            <img src={heroAnime.bannerImage} alt={heroAnime.title} className="absolute inset-0 w-full h-full object-cover"/>
-            <div className="relative z-20 max-w-2xl space-y-4">
-                <h1 className="text-4xl md:text-5xl font-bold font-headline glow-text drop-shadow-lg">{heroAnime.title}</h1>
-                <p className="text-lg text-white/80 line-clamp-3">{heroAnime.description}</p>
-                <Button asChild size="lg">
-                    <Link href={`/anime/${heroAnime.id}`}>
-                        <Clapperboard className="mr-2" />
-                        Ver ahora
-                    </Link>
-                </Button>
-            </div>
-        </div>
+      ) : heroAnimes.length > 0 && (
+         <Carousel
+          plugins={[autoplayPlugin.current]}
+          className="w-full"
+          onMouseEnter={() => autoplayPlugin.current.stop()}
+          onMouseLeave={() => autoplayPlugin.current.reset()}
+        >
+          <CarouselContent>
+            {heroAnimes.map((heroAnime) => (
+              <CarouselItem key={heroAnime.id}>
+                <div className="relative h-[50vh] w-full flex items-end rounded-lg overflow-hidden p-8 text-white">
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent z-10"/>
+                  <img src={heroAnime.bannerImage} alt={heroAnime.title} className="absolute inset-0 w-full h-full object-cover"/>
+                  <div className="relative z-20 max-w-2xl space-y-4">
+                      <h1 className="text-4xl md:text-5xl font-bold font-headline glow-text drop-shadow-lg">{heroAnime.title}</h1>
+                      <p className="text-lg text-white/80 line-clamp-3">{heroAnime.description}</p>
+                      <Button asChild size="lg">
+                          <Link href={`/anime/${heroAnime.id}`}>
+                              <Clapperboard className="mr-2" />
+                              Ver ahora
+                          </Link>
+                      </Button>
+                  </div>
+                </div>
+              </CarouselItem>
+            ))}
+          </CarouselContent>
+        </Carousel>
       )}
       
       <div className="space-y-16">
