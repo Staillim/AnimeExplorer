@@ -12,7 +12,7 @@ interface AnimeCardProps {
 export default function AnimeCard({ anime }: AnimeCardProps) {
   const languages = Array.from(new Set((anime.seasons || []).map(s => s.language)));
 
-  // Simple hash function to generate a number from a string
+  // Simple hash function to generate a number from a string for consistent styling
   const stringToHash = (str: string) => {
     let hash = 0;
     for (let i = 0; i < str.length; i++) {
@@ -23,6 +23,7 @@ export default function AnimeCard({ anime }: AnimeCardProps) {
     return Math.abs(hash);
   };
   
+  // Assign a consistent style based on the anime ID
   const cardStyleIndex = stringToHash(anime.id) % 5;
 
   const cardStyles = [
@@ -35,10 +36,10 @@ export default function AnimeCard({ anime }: AnimeCardProps) {
 
   return (
     <Link href={`/anime/${anime.id}`} className="group relative block w-full h-full">
-      {/* Orbs */}
+      {/* Orb background effect */}
       <div 
         className={cn(
-          "absolute -inset-1 rounded-xl opacity-0 transition-opacity duration-500 group-hover:opacity-70 blur-lg animate-pulse",
+          "absolute -inset-1 rounded-xl opacity-0 transition-opacity duration-500 group-hover:opacity-70 blur-lg",
           cardStyles[cardStyleIndex]
         )}
         style={{ background: 'radial-gradient(circle at 50% 50%, var(--card-gradient-start), var(--card-gradient-end))' }}
@@ -50,12 +51,12 @@ export default function AnimeCard({ anime }: AnimeCardProps) {
             "group-hover:scale-105 group-hover:-rotate-1 group-hover:shadow-2xl group-hover:shadow-black/50"
         )}
       >
-        {/* Shimmer Effect */}
+        {/* Shimmer Effect on Hover */}
         <div className="absolute inset-0 z-10 hidden h-full w-full overflow-hidden rounded-xl md:block">
             <div className="absolute -top-1/2 left-0 h-[200%] w-24 -skew-x-12 bg-gradient-to-r from-transparent via-white/20 to-transparent opacity-0 transition-all duration-700 group-hover:opacity-100 group-hover:animate-shimmer" />
         </div>
 
-        {/* Floating Particles */}
+        {/* Floating Particles on Hover */}
         <div className="absolute inset-0 z-10 opacity-0 transition-opacity duration-500 group-hover:opacity-100">
             {Array.from({ length: 15 }).map((_, i) => (
                 <span
