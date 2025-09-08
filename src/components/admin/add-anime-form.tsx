@@ -76,12 +76,13 @@ interface AddAnimeFormProps {
   onSuccess?: () => void;
 }
 
-const getDefaultSeason = (type: 'season' | 'movie' = 'season', title = "Temporada 1") => {
+const getDefaultSeason = (type: 'season' | 'movie' = 'season', title = "Temporada 1", chapters: any[] = []) => {
+    const defaultChapters = type === 'season' ? (chapters.length > 0 ? chapters : [{ title: "Capítulo 1", url: "" }]) : [];
     return {
         type: type,
         title: title,
         language: 'sub' as const,
-        chapters: type === 'season' ? [{ title: "Capítulo 1", url: "" }] : [],
+        chapters: defaultChapters,
         movieUrl: type === 'movie' ? "" : null,
     };
 }
@@ -126,13 +127,14 @@ export function AddAnimeForm({ animeToEdit, onSuccess }: AddAnimeFormProps) {
   const handleParseCode = () => {
     try {
         const isMovie = /GENEROS\/ETIQUETAS:.*Peliculas/i.test(code);
+        const isSerie = /GENEROS\/ETIQUETAS:.*Series/i.test(code);
         
         const titleMatch = code.match(/TITULO DE LA ENTRADA: (.*?) - (\d{4})/);
         const title = titleMatch ? titleMatch[1].trim() : '';
         const year = titleMatch ? parseInt(titleMatch[2], 10) : new Date().getFullYear();
 
         const genresMatch = code.match(/GENEROS\/ETIQUETAS: (.*?)\n/);
-        const genres = genresMatch ? genresMatch[1].split(',').map(g => g.trim()).filter(g => g.toLowerCase() !== 'peliculas') : [];
+        const genres = genresMatch ? genresMatch[1].split(',').map(g => g.trim()).filter(g => g && !['peliculas', 'series'].includes(g.toLowerCase())) : [];
         const genresString = genres.join(', ');
         
         const ratingMatch = code.match(/\[sc\/(.*?)\]/);
@@ -156,26 +158,34 @@ export function AddAnimeForm({ animeToEdit, onSuccess }: AddAnimeFormProps) {
             bannerImage,
             description,
             genres: genresString,
-            rating: rating,
-            dataAiHint: dataAiHint,
+            rating,
+            dataAiHint,
             seasons: []
         });
 
         if (isMovie) {
             replaceSeasons([getDefaultSeason('movie', title)]);
-        } else {
-            replaceSeasons([getDefaultSeason('season', 'Temporada 1')]);
-             toast({
+            toast({
+                title: "Tipo Película Detectado",
+                description: "Por favor, añade la URL de reproducción.",
+            });
+        } else if (isSerie) {
+            const episodeMatches = code.matchAll(/<a href=".*?" class="episodo">/g);
+            const episodeCount = [...episodeMatches].length;
+            const newChapters = Array.from({ length: episodeCount }, (_, i) => ({ title: `Capítulo ${i + 1}`, url: "" }));
+            replaceSeasons([getDefaultSeason('season', 'Temporada 1', newChapters)]);
+            toast({
                 title: "Tipo Serie Detectado",
-                description: "La extracción de capítulos para series aún no está implementada. Se ha rellenado una temporada por defecto.",
+                description: `Se han generado ${episodeCount} campos para capítulos. Por favor, rellena las URLs.`,
+            });
+        } else {
+             replaceSeasons([getDefaultSeason()]);
+             toast({
+                title: "Tipo no detectado",
+                description: "No se pudo determinar si es serie o película. Se ha rellenado una temporada por defecto.",
             });
         }
         
-         toast({
-            title: "Código Analizado",
-            description: "El formulario ha sido rellenado con la información extraída. Por favor, completa los campos restantes.",
-        });
-
     } catch(e) {
          toast({
             variant: "destructive",
@@ -275,7 +285,7 @@ export function AddAnimeForm({ animeToEdit, onSuccess }: AddAnimeFormProps) {
                         onChange={(e) => setCode(e.target.value)}
                         className="min-h-[120px] font-mono text-xs"
                     />
-                    <Button type="button" variant="outline" size="sm" onClick={handleParseCode}>
+                    <Button type="button" variant="outline" size="sm" onClick={handleParseCode} disabled={!code}>
                         <Wand2 className="mr-2 h-4 w-4"/>
                         Analizar y Rellenar Formulario
                     </Button>
@@ -561,8 +571,9 @@ function SeasonField({ seasonIndex, removeSeason, totalSeasons }: { seasonIndex:
                 control={control}
                 name={`seasons.${seasonIndex}.chapters.${chapterIndex}.title`}
                 render={({ field }) => (
-                  <FormItem className="flex-grow">
-                    <FormControl><Input {...field} placeholder={`Título del Cap. ${chapterIndex + 1} (opcional)`} /></FormControl>
+                  <FormItem className="w-1/3">
+                     {chapterIndex === 0 && <FormLabel>Título</FormLabel>}
+                    <FormControl><Input {...field} placeholder={`Cap. ${chapterIndex + 1}`} /></FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -572,6 +583,7 @@ function SeasonField({ seasonIndex, removeSeason, totalSeasons }: { seasonIndex:
                 name={`seasons.${seasonIndex}.chapters.${chapterIndex}.url`}
                 render={({ field }) => (
                   <FormItem className="flex-grow">
+                     {chapterIndex === 0 && <FormLabel>URL</FormLabel>}
                     <FormControl><Input {...field} placeholder="https://..." /></FormControl>
                     <FormMessage />
                   </FormItem>
@@ -624,3 +636,5 @@ function SeasonField({ seasonIndex, removeSeason, totalSeasons }: { seasonIndex:
     </div>
   );
 }
+
+    
