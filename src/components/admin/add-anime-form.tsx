@@ -25,6 +25,7 @@ import { collection, addDoc, doc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 import React from "react";
+import { Label } from "../ui/label";
 
 
 const chapterSchema = z.object({
@@ -124,35 +125,30 @@ export function AddAnimeForm({ animeToEdit, onSuccess }: AddAnimeFormProps) {
 
   const handleParseCode = () => {
     try {
-        // Tipo (Pelicula o Serie)
         const isMovie = /GENEROS\/ETIQUETAS:.*Peliculas/i.test(code);
-
-        // Título y Año
+        
         const titleMatch = code.match(/TITULO DE LA ENTRADA: (.*?) - (\d{4})/);
         const title = titleMatch ? titleMatch[1].trim() : '';
         const year = titleMatch ? parseInt(titleMatch[2], 10) : new Date().getFullYear();
 
-        // Géneros
         const genresMatch = code.match(/GENEROS\/ETIQUETAS: (.*?)\n/);
-        let genres = genresMatch ? genresMatch[1].split(',').map(g => g.trim()).filter(g => g.toLowerCase() !== 'peliculas') : [];
+        const genres = genresMatch ? genresMatch[1].split(',').map(g => g.trim()).filter(g => g.toLowerCase() !== 'peliculas') : [];
         const genresString = genres.join(', ');
+        
+        const ratingMatch = code.match(/\[sc\/(.*?)\]/);
+        const rating = ratingMatch ? parseFloat(ratingMatch[1]) : 7.0;
 
-        // Banner
         const bannerMatch = code.match(/IMAGEN DE FONDO: (https?:\/\/\S+)/);
         const bannerImage = bannerMatch ? bannerMatch[1].trim() : '';
 
-        // Cover
         const coverMatch = code.match(/<img.*?src="([^"]+)"/);
         const coverImage = coverMatch ? coverMatch[1].trim() : '';
 
-        // Descripción
         const descriptionMatch = code.match(/\[nd\]([\s\S]*?)\[\/nd\]/);
         const description = descriptionMatch ? descriptionMatch[1].trim() : '';
         
-        // AI Hint
-        const dataAiHint = genres.slice(0, 2).join(' ').toLowerCase();
+        const dataAiHint = genres.slice(0, 2).join(' ').toLowerCase() || 'anime';
 
-        // Reset form con nuevos valores
         form.reset({
             title,
             year,
@@ -160,26 +156,24 @@ export function AddAnimeForm({ animeToEdit, onSuccess }: AddAnimeFormProps) {
             bannerImage,
             description,
             genres: genresString,
-            rating: 7.0, // Default
-            dataAiHint: dataAiHint || 'anime',
-            seasons: [] // se llenará a continuación
+            rating: rating,
+            dataAiHint: dataAiHint,
+            seasons: []
         });
 
         if (isMovie) {
             replaceSeasons([getDefaultSeason('movie', title)]);
         } else {
-            // Lógica para series si es necesario (no implementada con el código de ejemplo)
             replaceSeasons([getDefaultSeason('season', 'Temporada 1')]);
              toast({
-                variant: "destructive",
-                title: "Tipo no Soportado",
-                description: "La extracción de capítulos para series no está implementada aún. Se ha rellenado con valores por defecto.",
+                title: "Tipo Serie Detectado",
+                description: "La extracción de capítulos para series aún no está implementada. Se ha rellenado una temporada por defecto.",
             });
         }
         
          toast({
             title: "Código Analizado",
-            description: "El formulario ha sido rellenado con la información extraída. Por favor, verifica los campos.",
+            description: "El formulario ha sido rellenado con la información extraída. Por favor, completa los campos restantes.",
         });
 
     } catch(e) {
@@ -200,7 +194,7 @@ export function AddAnimeForm({ animeToEdit, onSuccess }: AddAnimeFormProps) {
         if (season.type === 'movie') {
           return {
             type: 'movie',
-            title: values.title, // Use main title for movie
+            title: values.title,
             language: season.language,
             chapters: [{ title: values.title, url: season.movieUrl || '' }],
           };
@@ -233,7 +227,17 @@ export function AddAnimeForm({ animeToEdit, onSuccess }: AddAnimeFormProps) {
       });
 
       if (!isEditMode) {
-        form.reset();
+        form.reset({
+          title: "",
+          year: new Date().getFullYear(),
+          coverImage: "",
+          bannerImage: "",
+          description: "",
+          genres: "",
+          rating: 7.0,
+          seasons: [getDefaultSeason()],
+          dataAiHint: "anime",
+        });
         setCode('');
       }
       if (onSuccess) onSuccess();
@@ -269,10 +273,10 @@ export function AddAnimeForm({ animeToEdit, onSuccess }: AddAnimeFormProps) {
                         placeholder="<!-- TITULO DE LA ENTRADA: ... -->"
                         value={code}
                         onChange={(e) => setCode(e.target.value)}
-                        className="min-h-[120px] font-code text-xs"
+                        className="min-h-[120px] font-mono text-xs"
                     />
                     <Button type="button" variant="outline" size="sm" onClick={handleParseCode}>
-                        <Wand2 className="mr-2"/>
+                        <Wand2 className="mr-2 h-4 w-4"/>
                         Analizar y Rellenar Formulario
                     </Button>
                 </div>
@@ -351,11 +355,11 @@ export function AddAnimeForm({ animeToEdit, onSuccess }: AddAnimeFormProps) {
               />
             </div>
             
-             <FormField
+            <FormField
               control={form.control}
               name="dataAiHint"
               render={({ field }) => (
-                <FormItem>
+                <FormItem className="hidden">
                   <FormLabel>AI Hint</FormLabel>
                   <FormControl>
                     <Input placeholder="anime action" {...field} />
