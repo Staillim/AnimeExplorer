@@ -9,7 +9,7 @@ import { db } from '@/lib/firebase';
 import type { Anime, Ad, Season } from '@/lib/types';
 import { useAuth } from '@/context/auth-context';
 import { Badge } from '@/components/ui/badge';
-import { Star, Calendar, Tv, PlayCircle, Loader2 } from 'lucide-react';
+import { Star, Calendar, Tv, PlayCircle, Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import PlayerAdOverlay from '@/components/player-ad-overlay';
@@ -158,9 +158,11 @@ export default function AnimeDetailPage() {
     };
 
     const handleChapterSelect = (chapterIndex: number) => {
-        setSelectedChapterIndex(chapterIndex);
-        if (user) {
-            updateUserWatchHistory(selectedSeasonIndex, chapterIndex);
+        if (selectedSeason && chapterIndex >= 0 && chapterIndex < selectedSeason.chapters.length) {
+            setSelectedChapterIndex(chapterIndex);
+            if (user) {
+                updateUserWatchHistory(selectedSeasonIndex, chapterIndex);
+            }
         }
     };
 
@@ -186,7 +188,7 @@ export default function AnimeDetailPage() {
     
     return (
         <div className="w-full space-y-12">
-            <div className="relative w-full h-[60vh] rounded-lg overflow-hidden">
+             <div className="relative w-full h-[60vh] rounded-lg overflow-hidden">
                 <div className="absolute inset-0">
                     <Image
                         src={anime.bannerImage || anime.coverImage}
@@ -239,11 +241,10 @@ export default function AnimeDetailPage() {
             {/* Reproductor y Lista de Capítulos */}
             {selectedChapter && selectedSeason && (
                 <div className="space-y-8">
-                    {/* Reproductor de Video */}
                     <div className="space-y-4">
                         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                            <h2 className="text-2xl font-bold font-headline glow-text text-primary">
-                                Viendo: {selectedSeason.title} - {selectedChapter.title || `Capítulo ${selectedChapterIndex + 1}`}
+                                {isMovie ? `Viendo: ${anime.title}` : `Viendo: ${selectedSeason.title}`}
                            </h2>
                            {anime.seasons.length > 1 && (
                               <Select onValueChange={(value) => handleSeasonSelect(Number(value))} value={String(selectedSeasonIndex)}>
@@ -260,43 +261,55 @@ export default function AnimeDetailPage() {
                               </Select>
                            )}
                         </div>
-                        <div className="relative aspect-video bg-black/50 rounded-lg overflow-hidden shadow-2xl shadow-primary/20 ring-2 ring-primary/30 p-1 md:p-2">
-                           { isPlayerLocked && randomAd && (
-                                <PlayerAdOverlay adUrl={randomAd.url} onComplete={handleAdComplete} />
-                           )}
-                           <iframe
-                                key={selectedChapter.url}
-                                src={selectedChapter.url}
-                                title={selectedChapter.title || `Capítulo ${selectedChapterIndex + 1}`}
-                                frameBorder="0"
-                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                                allowFullScreen
-                                className="w-full h-full rounded-md"
-                            ></iframe>
+                        <div className="p-1 md:p-2 bg-black/50 rounded-lg ring-2 ring-primary/30 shadow-2xl shadow-primary/20">
+                            <div className="relative aspect-video rounded-md overflow-hidden">
+                               { isPlayerLocked && randomAd && (
+                                    <PlayerAdOverlay adUrl={randomAd.url} onComplete={handleAdComplete} />
+                               )}
+                               <iframe
+                                    key={selectedChapter.url}
+                                    src={selectedChapter.url}
+                                    title={selectedChapter.title || `Capítulo ${selectedChapterIndex + 1}`}
+                                    frameBorder="0"
+                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                    allowFullScreen
+                                    className="w-full h-full"
+                                ></iframe>
+                            </div>
                         </div>
                     </div>
 
-                    {/* Lista de Capítulos */}
-                     {selectedSeason.chapters.length > 1 && (
-                        <div className="space-y-4">
-                            <h2 className="text-3xl font-bold font-headline glow-text">Capítulos de {selectedSeason.title} ({selectedSeason.language.toUpperCase()})</h2>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                                {selectedSeason.chapters.map((chapter, index) => (
-                                    <button
-                                        key={index}
-                                        onClick={() => handleChapterSelect(index)}
-                                        className={`flex items-center p-3 rounded-lg hover:bg-secondary transition-colors group text-left w-full ${selectedChapterIndex === index ? 'bg-primary/20 ring-2 ring-primary' : 'bg-card/50'}`}
-                                    >
-                                        <PlayCircle className={`w-10 h-10 transition-colors ${selectedChapterIndex === index ? 'text-primary' : 'text-primary/50 group-hover:text-primary'}`}/>
-                                        <div className="ml-4 overflow-hidden">
-                                            <p className={`font-semibold text-lg truncate transition-colors ${selectedChapterIndex === index ? 'text-primary-foreground' : 'text-foreground group-hover:text-primary-foreground'}`}>
-                                                {chapter.title || `Capítulo ${index + 1}`}
-                                            </p>
-                                            <span className="text-sm text-muted-foreground">Reproducir ahora</span>
-                                        </div>
-                                    </button>
-                                ))}
+                    {/* Navegador de Capítulos */}
+                     {!isMovie && selectedSeason.chapters.length > 1 && (
+                        <div className="flex items-center justify-between gap-4 p-4 rounded-lg bg-card/50 border border-border">
+                            <Button 
+                                variant="outline" 
+                                size="lg" 
+                                onClick={() => handleChapterSelect(selectedChapterIndex - 1)}
+                                disabled={selectedChapterIndex === 0}
+                                aria-label="Capítulo anterior"
+                            >
+                                <ChevronLeft className="h-5 w-5" />
+                                <span className="ml-2 hidden sm:inline">Anterior</span>
+                            </Button>
+                            
+                            <div className="text-center overflow-hidden">
+                                <p className="text-sm text-muted-foreground">Estás viendo</p>
+                                <h3 className="text-lg font-bold text-primary-foreground truncate">
+                                    {selectedChapter.title || `Capítulo ${selectedChapterIndex + 1}`}
+                                </h3>
                             </div>
+
+                            <Button 
+                                variant="outline" 
+                                size="lg"
+                                onClick={() => handleChapterSelect(selectedChapterIndex + 1)}
+                                disabled={selectedChapterIndex === selectedSeason.chapters.length - 1}
+                                aria-label="Siguiente capítulo"
+                            >
+                               <span className="mr-2 hidden sm:inline">Siguiente</span>
+                               <ChevronRight className="h-5 w-5" />
+                            </Button>
                         </div>
                      )}
                 </div>
@@ -330,3 +343,5 @@ export default function AnimeDetailPage() {
         </div>
     );
 }
+
+    
