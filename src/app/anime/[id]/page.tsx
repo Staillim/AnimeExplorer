@@ -260,7 +260,7 @@ export default function AnimeDetailPage() {
                               </Select>
                            )}
                         </div>
-                        <div className="relative aspect-video bg-black rounded-lg overflow-hidden shadow-2xl shadow-primary/20 ring-2 ring-primary/30">
+                        <div className="relative aspect-video bg-black/50 rounded-lg overflow-hidden shadow-2xl shadow-primary/20 ring-2 ring-primary/30 p-1 md:p-2">
                            { isPlayerLocked && randomAd && (
                                 <PlayerAdOverlay adUrl={randomAd.url} onComplete={handleAdComplete} />
                            )}
@@ -271,7 +271,7 @@ export default function AnimeDetailPage() {
                                 frameBorder="0"
                                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                                 allowFullScreen
-                                className="w-full h-full"
+                                className="w-full h-full rounded-md"
                             ></iframe>
                         </div>
                     </div>
@@ -329,4 +329,5 @@ export default function AnimeDetailPage() {
             </div>
         </div>
     );
-}
+
+    
