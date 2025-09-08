@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Skeleton } from "../ui/skeleton";
-import { Sheet, SheetContent, SheetTrigger } from "../ui/sheet";
+import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "../ui/sheet";
 import { Input } from "../ui/input";
 import { useSearch } from "@/context/search-context";
 
@@ -49,6 +49,7 @@ export default function Header() {
                 </Button>
               </SheetTrigger>
               <SheetContent side="top" className="p-4">
+                <SheetTitle className="sr-only">Search</SheetTitle>
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                   <Input
