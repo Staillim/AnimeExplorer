@@ -1,56 +1,50 @@
-
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-  
-    // Helper function to check for admin role
-    function isAdmin() {
-      return request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
-    }
 
-    // Rules for the 'animes' collection
-    match /animes/{animeId} {
-      // Anyone can read the anime data
-      allow read: if true;
-
-      // Only admins can create or delete anime documents
-      allow create, delete: if isAdmin();
-      
-      // Allow updates under specific conditions
-      allow update: if 
-        // Admins can update any field
-        isAdmin() ||
-        // ANY user (anonymous included) can update ONLY the 'views' field by exactly 1
-        (
-          request.resource.data.keys().hasAll(resource.data.keys()) &&
-          request.resource.data.keys().hasOnly(resource.data.keys().concat(['views'])) &&
-          request.resource.data.views == resource.data.views + 1
-        );
-    }
-
-    // Rules for the 'users' collection
+    // Regla para la colección de usuarios
+    // Los usuarios autenticados pueden leer y actualizar su propio perfil.
+    // Los usuarios autenticados pueden crear su propio perfil.
+    // Nadie puede cambiar su propio rol; solo un admin podría hacerlo (regla implícita).
     match /users/{userId} {
-        // A user can read their own profile, admins can read any profile
-        allow read: if request.auth.uid == userId || isAdmin();
-        
-        // A user can create their own profile upon signup
-        allow create: if request.auth.uid == userId;
-
-        // A user can update their own profile, but cannot change their role.
-        // Admins can update any profile, including the role.
-        allow update: if (request.auth.uid == userId && request.resource.data.role == resource.data.role) || isAdmin();
-        
-        // Only admins can delete user profiles
-        allow delete: if isAdmin();
+      allow read, update: if request.auth != null && request.auth.uid == userId
+                    && request.resource.data.role == resource.data.role; // Impide que el usuario cambie su propio rol
+      allow create: if request.auth != null;
     }
-    
-    // Rules for the 'ads' collection
-    match /ads/{adId} {
-      // Anyone can see the ads
+
+    // Regla para la colección de animes
+    match /animes/{animeId} {
+      // Cualquiera puede leer los datos de los animes.
       allow read: if true;
-      // Only admins can create, update, or delete ads
-      allow write: if isAdmin();
+      
+      // Solo los administradores pueden crear y eliminar documentos de animes.
+      allow create, delete: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+
+      // Regla de actualización:
+      // - Un administrador puede actualizar cualquier campo.
+      // - CUALQUIER persona puede actualizar el documento si se cumplen dos condiciones:
+      //   1. El campo 'views' se incrementa exactamente en 1.
+      //   2. Ningún otro campo modificable ha cambiado.
+      allow update: if (request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin')
+                    || (
+                      request.resource.data.views == resource.data.views + 1 &&
+                      request.resource.data.title == resource.data.title &&
+                      request.resource.data.description == resource.data.description &&
+                      request.resource.data.coverImage == resource.data.coverImage &&
+                      request.resource.data.year == resource.data.year &&
+                      request.resource.data.rating == resource.data.rating &&
+                      request.resource.data.genres == resource.data.genres &&
+                      request.resource.data.seasons == resource.data.seasons
+                    );
+    }
+
+    // Regla para la colección de anuncios
+    // Cualquiera puede leer los anuncios.
+    // Solo los administradores pueden gestionar (crear, actualizar, eliminar) los anuncios.
+    match /ads/{adId} {
+      allow read: if true;
+      allow write: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
     }
   }
 }
