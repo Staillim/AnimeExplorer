@@ -18,12 +18,13 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useToast } from "@/lib/hooks/use-toast";
-import { Loader2, PlusCircle, Trash2 } from "lucide-react";
+import { Loader2, PlusCircle, Trash2, Wand2 } from "lucide-react";
 import { Separator } from "../ui/separator";
 import type { Anime } from "@/lib/types";
 import { collection, addDoc, doc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
+import React from "react";
 
 
 const chapterSchema = z.object({
@@ -87,6 +88,8 @@ const getDefaultSeason = (type: 'season' | 'movie' = 'season', title = "Temporad
 
 export function AddAnimeForm({ animeToEdit, onSuccess }: AddAnimeFormProps) {
   const { toast } = useToast();
+  const [code, setCode] = React.useState('');
+
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: animeToEdit
@@ -111,13 +114,83 @@ export function AddAnimeForm({ animeToEdit, onSuccess }: AddAnimeFormProps) {
         },
   });
 
-  const { fields: seasonFields, append: appendSeason, remove: removeSeason } = useFieldArray({
+  const { fields: seasonFields, append: appendSeason, remove: removeSeason, replace: replaceSeasons } = useFieldArray({
     control: form.control,
     name: "seasons",
   });
 
   const { isSubmitting } = form.formState;
   const isEditMode = !!animeToEdit;
+
+  const handleParseCode = () => {
+    try {
+        // Tipo (Pelicula o Serie)
+        const isMovie = /GENEROS\/ETIQUETAS:.*Peliculas/i.test(code);
+
+        // Título y Año
+        const titleMatch = code.match(/TITULO DE LA ENTRADA: (.*?) - (\d{4})/);
+        const title = titleMatch ? titleMatch[1].trim() : '';
+        const year = titleMatch ? parseInt(titleMatch[2], 10) : new Date().getFullYear();
+
+        // Géneros
+        const genresMatch = code.match(/GENEROS\/ETIQUETAS: (.*?)\n/);
+        let genres = genresMatch ? genresMatch[1].split(',').map(g => g.trim()).filter(g => g.toLowerCase() !== 'peliculas') : [];
+        const genresString = genres.join(', ');
+
+        // Banner
+        const bannerMatch = code.match(/IMAGEN DE FONDO: (https?:\/\/\S+)/);
+        const bannerImage = bannerMatch ? bannerMatch[1].trim() : '';
+
+        // Cover
+        const coverMatch = code.match(/<img.*?src="([^"]+)"/);
+        const coverImage = coverMatch ? coverMatch[1].trim() : '';
+
+        // Descripción
+        const descriptionMatch = code.match(/\[nd\]([\s\S]*?)\[\/nd\]/);
+        const description = descriptionMatch ? descriptionMatch[1].trim() : '';
+        
+        // AI Hint
+        const dataAiHint = genres.slice(0, 2).join(' ').toLowerCase();
+
+        // Reset form con nuevos valores
+        form.reset({
+            title,
+            year,
+            coverImage,
+            bannerImage,
+            description,
+            genres: genresString,
+            rating: 7.0, // Default
+            dataAiHint: dataAiHint || 'anime',
+            seasons: [] // se llenará a continuación
+        });
+
+        if (isMovie) {
+            replaceSeasons([getDefaultSeason('movie', title)]);
+        } else {
+            // Lógica para series si es necesario (no implementada con el código de ejemplo)
+            replaceSeasons([getDefaultSeason('season', 'Temporada 1')]);
+             toast({
+                variant: "destructive",
+                title: "Tipo no Soportado",
+                description: "La extracción de capítulos para series no está implementada aún. Se ha rellenado con valores por defecto.",
+            });
+        }
+        
+         toast({
+            title: "Código Analizado",
+            description: "El formulario ha sido rellenado con la información extraída. Por favor, verifica los campos.",
+        });
+
+    } catch(e) {
+         toast({
+            variant: "destructive",
+            title: "Error al Analizar",
+            description: "El código proporcionado no tiene el formato esperado. Por favor, revísalo.",
+        });
+    }
+  };
+
 
   async function onSubmit(values: FormData) {
     try {
@@ -161,6 +234,7 @@ export function AddAnimeForm({ animeToEdit, onSuccess }: AddAnimeFormProps) {
 
       if (!isEditMode) {
         form.reset();
+        setCode('');
       }
       if (onSuccess) onSuccess();
 
@@ -179,14 +253,31 @@ export function AddAnimeForm({ animeToEdit, onSuccess }: AddAnimeFormProps) {
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <CardHeader>
             <CardTitle>{isEditMode ? "Editar Contenido" : "Agregar Nuevo Contenido"}</CardTitle>
-            <CardDescription>
+             <CardDescription>
               {isEditMode 
                 ? `Editando los detalles de ${animeToEdit.title}.`
-                : "Rellena los campos para añadir un nuevo anime o película al catálogo."
+                : "Pega el código fuente para rellenar automáticamente el formulario."
               }
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
+            {!isEditMode && (
+                <div className="space-y-2">
+                    <Label htmlFor="code-parser">Pegar Código Fuente</Label>
+                    <Textarea 
+                        id="code-parser"
+                        placeholder="<!-- TITULO DE LA ENTRADA: ... -->"
+                        value={code}
+                        onChange={(e) => setCode(e.target.value)}
+                        className="min-h-[120px] font-code text-xs"
+                    />
+                    <Button type="button" variant="outline" size="sm" onClick={handleParseCode}>
+                        <Wand2 className="mr-2"/>
+                        Analizar y Rellenar Formulario
+                    </Button>
+                </div>
+            )}
+             <Separator />
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <FormField
                 control={form.control}
@@ -357,7 +448,7 @@ export function AddAnimeForm({ animeToEdit, onSuccess }: AddAnimeFormProps) {
 
 
 function SeasonField({ seasonIndex, removeSeason, totalSeasons }: { seasonIndex: number, removeSeason: (index: number) => void, totalSeasons: number }) {
-  const { control, setValue } = useFormContext<FormData>();
+  const { control, setValue, getValues } = useFormContext<FormData>();
 
   const { fields, append, remove } = useFieldArray({
     control,
@@ -368,6 +459,8 @@ function SeasonField({ seasonIndex, removeSeason, totalSeasons }: { seasonIndex:
     control,
     name: `seasons.${seasonIndex}.type`,
   });
+  
+  const animeTitle = getValues('title');
 
   return (
     <div className="p-4 border rounded-lg bg-secondary/20 relative space-y-4">
@@ -384,9 +477,11 @@ function SeasonField({ seasonIndex, removeSeason, totalSeasons }: { seasonIndex:
                   if (value === 'movie') {
                     setValue(`seasons.${seasonIndex}.chapters`, []);
                     setValue(`seasons.${seasonIndex}.movieUrl`, "");
+                    setValue(`seasons.${seasonIndex}.title`, animeTitle || 'Película');
                   } else {
                      setValue(`seasons.${seasonIndex}.chapters`, [{ title: "Capítulo 1", url: ""}]);
                      setValue(`seasons.${seasonIndex}.movieUrl`, null);
+                     setValue(`seasons.${seasonIndex}.title`, 'Temporada 1');
                   }
                 }} 
                 defaultValue={field.value}>
@@ -404,19 +499,17 @@ function SeasonField({ seasonIndex, removeSeason, totalSeasons }: { seasonIndex:
             </FormItem>
           )}
         />
-        {versionType === 'season' && (
-          <FormField
-            control={control}
-            name={`seasons.${seasonIndex}.title`}
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Título de la Versión</FormLabel>
-                <FormControl><Input {...field} placeholder={'Temporada 1'} /></FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        )}
+        <FormField
+          control={control}
+          name={`seasons.${seasonIndex}.title`}
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Título de la Versión</FormLabel>
+              <FormControl><Input {...field} placeholder={versionType === 'movie' ? 'Título de la Película' : 'Temporada 1'} disabled={versionType === 'movie'} /></FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
         <FormField
           control={control}
           name={`seasons.${seasonIndex}.language`}
