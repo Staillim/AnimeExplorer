@@ -1,8 +1,9 @@
 
 "use client";
 
+import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
-import { Clapperboard, Home, WandSparkles, LogIn, User, ShieldCheck, LogOut, Search } from "lucide-react";
+import { Clapperboard, Search, ShieldCheck, LogIn, LogOut, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/auth-context";
 import {
@@ -15,18 +16,45 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Skeleton } from "../ui/skeleton";
-import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "../ui/sheet";
 import { Input } from "../ui/input";
 import { useSearch } from "@/context/search-context";
+import { cn } from "@/lib/utils";
 
 export default function Header() {
   const { user, userProfile, loading, logout } = useAuth();
   const { searchQuery, setSearchQuery } = useSearch();
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
   const getInitials = (name?: string | null) => {
     if (!name) return "U";
     return name.charAt(0).toUpperCase();
   };
+  
+  useEffect(() => {
+    if (isSearchOpen) {
+      searchInputRef.current?.focus();
+    }
+  }, [isSearchOpen]);
+  
+  // Clear search when search bar is closed and query exists
+  const handleToggleSearch = () => {
+    if (isSearchOpen && searchQuery) {
+      setSearchQuery('');
+    }
+    setIsSearchOpen(!isSearchOpen);
+  };
+  
+  // Handle closing on blur, but not if the search icon itself was clicked
+  const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+    // relatedTarget is the element receiving focus
+    if (!e.relatedTarget?.closest('#search-toggle-button')) {
+      setIsSearchOpen(false);
+       if (searchQuery) {
+          setSearchQuery('');
+       }
+    }
+  }
 
   return (
     <header className="bg-background/70 backdrop-blur-sm border-b border-border/50 sticky top-0 z-50">
@@ -34,35 +62,43 @@ export default function Header() {
         <div className="flex h-16 items-center justify-between">
           <Link href="/" className="flex items-center gap-2 group">
             <Clapperboard className="h-8 w-8 text-primary group-hover:animate-pulse" />
-            <span className="text-lg sm:text-xl font-bold font-headline tracking-tight group-hover:glow-text transition-all duration-300">
+            <span className={cn(
+              "text-lg sm:text-xl font-bold font-headline tracking-tight group-hover:glow-text transition-all duration-300",
+              isSearchOpen && "hidden md:block" // Hide title on mobile when search is open
+              )}>
               PlayWave
             </span>
           </Link>
+          
           <nav className="flex items-center gap-1 sm:gap-2">
-            <Sheet>
-              <SheetTrigger asChild>
-                <Button asChild variant="ghost" size="icon">
+            
+            <div className="flex items-center justify-end gap-1">
+               <div className={cn(
+                  "flex items-center transition-all duration-300 ease-in-out",
+                  isSearchOpen ? "w-48 sm:w-64" : "w-0"
+                )}>
+                <Input
+                  ref={searchInputRef}
+                  type="text"
+                  placeholder="Buscar contenido..."
+                  className={cn(
+                    "w-full bg-input border-0 h-10 transition-all duration-300 ease-in-out",
+                     isSearchOpen ? "opacity-100 px-3" : "opacity-0 p-0"
+                  )}
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onBlur={handleBlur}
+                  aria-label="Search"
+                />
+              </div>
+
+               <Button id="search-toggle-button" asChild variant="ghost" size="icon" onClick={handleToggleSearch}>
                   <Link href="#">
-                    <Search className="h-5 w-5" />
+                    {isSearchOpen ? <X className="h-5 w-5"/> : <Search className="h-5 w-5" />}
                     <span className="sr-only">Buscar</span>
                   </Link>
                 </Button>
-              </SheetTrigger>
-              <SheetContent side="top" className="p-4">
-                <SheetTitle className="sr-only">Search</SheetTitle>
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                  <Input
-                    type="text"
-                    placeholder="Buscar por título, género, año..."
-                    className="w-full bg-input border-0 pl-10 text-lg h-14"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    aria-label="Search"
-                  />
-                </div>
-              </SheetContent>
-            </Sheet>
+            </div>
             
             {userProfile?.role === 'admin' && (
               <Button asChild variant="ghost">
@@ -72,7 +108,9 @@ export default function Header() {
                 </Link>
               </Button>
             )}
+            
             <div className="w-px h-6 bg-border mx-2" />
+
             {loading ? (
               <Skeleton className="w-10 h-10 rounded-full" />
             ) : user ? (
