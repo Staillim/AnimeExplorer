@@ -73,7 +73,7 @@ export default function Home() {
   return (
     <div className="space-y-12">
       {loading ? (
-        <Skeleton className="h-[50vh] w-full rounded-lg bg-muted/50" />
+        <Skeleton className="h-[30vh] w-full rounded-lg bg-muted/50" />
       ) : heroAnimes.length > 0 && (
          <Carousel
           plugins={[autoplayPlugin.current]}
@@ -84,7 +84,7 @@ export default function Home() {
           <CarouselContent>
             {heroAnimes.map((heroAnime) => (
               <CarouselItem key={heroAnime.id}>
-                <div className="relative h-[50vh] w-full flex items-end rounded-lg overflow-hidden p-8 text-white">
+                <div className="relative h-[30vh] w-full flex items-end rounded-lg overflow-hidden p-8 text-white">
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent z-10"/>
                   <Image 
                     src={heroAnime.bannerImage || heroAnime.coverImage} 
@@ -94,8 +94,8 @@ export default function Home() {
                     data-ai-hint={heroAnime.dataAiHint}
                   />
                   <div className="relative z-20 max-w-2xl space-y-4">
-                      <h1 className="text-4xl md:text-5xl font-bold font-headline glow-text drop-shadow-lg">{heroAnime.title}</h1>
-                      <p className="text-lg text-white/80 line-clamp-3">{heroAnime.description}</p>
+                      <h1 className="text-3xl md:text-4xl font-bold font-headline glow-text drop-shadow-lg">{heroAnime.title}</h1>
+                      <p className="text-lg text-white/80 line-clamp-2">{heroAnime.description}</p>
                       <Button asChild size="lg">
                           <Link href={`/anime/${heroAnime.id}`}>
                               <Clapperboard className="mr-2" />

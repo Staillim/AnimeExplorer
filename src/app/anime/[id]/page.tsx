@@ -188,7 +188,7 @@ export default function AnimeDetailPage() {
     
     return (
         <div className="w-full space-y-12">
-             <div className="relative w-full h-[60vh] rounded-lg overflow-hidden">
+             <div className="relative w-full h-[30vh] rounded-lg overflow-hidden">
                 <div className="absolute inset-0">
                     <Image
                         src={anime.bannerImage || anime.coverImage}
@@ -200,8 +200,8 @@ export default function AnimeDetailPage() {
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-background via-background/70 to-transparent" />
                 </div>
-                <div className="relative h-full flex flex-row items-end pb-12 gap-6 p-4 md:p-8">
-                    <div className="w-1/3 sm:w-1/4 md:w-1/4 lg:w-1/5 flex-shrink-0">
+                <div className="relative h-full flex flex-row items-end pb-8 gap-6 p-4 md:p-8">
+                    <div className="w-1/3 sm:w-1/4 md:w-1/5 lg:w-[15%] flex-shrink-0">
                         <div className="relative aspect-[2/3] w-full rounded-lg overflow-hidden shadow-2xl shadow-black/50 border-4 border-card/50">
                             <Image
                                 src={anime.coverImage}
@@ -212,8 +212,8 @@ export default function AnimeDetailPage() {
                             />
                         </div>
                     </div>
-                    <div className="w-2/3 sm:w-3/4 md:w-3/4 lg:w-4/5 space-y-2 md:space-y-4">
-                        <h1 className="text-xl sm:text-2xl md:text-4xl lg:text-6xl font-bold font-headline glow-text text-primary-foreground drop-shadow-lg">{anime.title}</h1>
+                    <div className="w-2/3 sm:w-3/4 md:w-4/5 lg:w-[85%] space-y-2 md:space-y-3">
+                        <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold font-headline glow-text text-primary-foreground drop-shadow-lg">{anime.title}</h1>
                         <div className="flex items-center flex-wrap gap-x-2 md:gap-x-4 gap-y-2 text-muted-foreground">
                             <div className="flex items-center gap-1.5 text-amber-400">
                                 <Star className="w-4 h-4 md:w-5 md:h-5 fill-current" />
@@ -229,7 +229,7 @@ export default function AnimeDetailPage() {
                             </div>
                         </div>
                         <p className="text-foreground/80 leading-relaxed max-w-3xl line-clamp-2 md:line-clamp-3 text-xs sm:text-sm md:text-base">{anime.description}</p>
-                         <div className="flex flex-wrap gap-2 pt-2">
+                         <div className="flex flex-wrap gap-2 pt-1">
                             {anime.genres.map((genre) => (
                                 <Badge key={genre} variant="secondary" className="text-xs md:text-sm backdrop-blur-sm">{genre}</Badge>
                             ))}
