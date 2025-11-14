@@ -1,0 +1,43 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Regla para la colección de usuarios
+    // Un usuario autenticado puede:
+    // - Leer y actualizar su propio perfil.
+    // - Crear su propio documento de perfil (el UID debe coincidir).
+    // - No puede cambiar su propio rol.
+    match /users/{userId} {
+      allow read, update: if request.auth != null && request.auth.uid == userId;
+      allow create: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // Regla para la colección de animes
+    match /animes/{animeId} {
+      // Cualquiera puede leer los datos de los animes.
+      allow read: if true;
+      
+      // Solo los administradores pueden crear y eliminar documentos de animes.
+      allow create, delete: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+
+      // Regla de actualización:
+      // - Un administrador puede actualizar cualquier campo.
+      // - CUALQUIER persona (incluidos anónimos) puede actualizar el documento
+      //   SI Y SOLO SI el único campo que se modifica es 'views' y se está incrementando en 1.
+      allow update: if (request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin')
+                    || (
+                      request.resource.data.diff(resource.data).affectedKeys().hasOnly(['views']) &&
+                      request.resource.data.views == resource.data.views + 1
+                    );
+    }
+
+    // Regla para la colección de anuncios
+    // Cualquiera puede leer los anuncios.
+    // Solo los administradores pueden gestionar (crear, actualizar, eliminar) los anuncios.
+    match /ads/{adId} {
+      allow read: if true;
+      allow write: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+  }
+}

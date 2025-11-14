@@ -1,0 +1,103 @@
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 257 40% 4%;
+    --foreground: 257 20% 90%;
+    
+    --card: 257 40% 10%;
+    --card-foreground: 257 20% 90%;
+    
+    --popover: 257 40% 4%;
+    --popover-foreground: 257 20% 90%;
+    
+    --primary: 257 80% 65%;
+    --primary-foreground: 257 20% 98%;
+    
+    --secondary: 257 40% 15%;
+    --secondary-foreground: 257 20% 98%;
+    
+    --muted: 257 40% 15%;
+    --muted-foreground: 257 20% 60%;
+    
+    --accent: 220 90% 70%;
+    --accent-foreground: 220 20% 98%;
+    
+    --destructive: 0 63% 31%;
+    --destructive-foreground: 0 86% 97%;
+    
+    --border: 257 40% 20%;
+    --input: 257 40% 12%;
+    --ring: 220 90% 70%;
+    
+    --radius: 0.75rem;
+
+    /* Card-specific styles for glow and gradients */
+    --card-glow: 257 80% 75%;
+    --card-gradient-start: hsl(257, 80%, 65%);
+    --card-gradient-end: hsl(220, 90%, 70%);
+  }
+
+  .dark {
+    --background: 257 40% 4%;
+    --foreground: 257 20% 90%;
+    --card: 257 40% 10%;
+    --card-foreground: 257 20% 90%;
+    --popover: 257 40% 4%;
+    --popover-foreground: 257 20% 90%;
+    --primary: 257 80% 65%;
+    --primary-foreground: 257 20% 98%;
+    --secondary: 257 40% 15%;
+    --secondary-foreground: 257 20% 98%;
+    --muted: 257 40% 15%;
+    --muted-foreground: 257 20% 60%;
+    --accent: 220 90% 70%;
+    --accent-foreground: 220 20% 98%;
+    --destructive: 0 63% 31%;
+    --destructive-foreground: 0 86% 97%;
+    --border: 257 40% 20%;
+    --input: 257 40% 12%;
+    --ring: 220 90% 70%;
+    --radius: 0.75rem;
+
+    --card-glow: 257 80% 75%;
+    --card-gradient-start: hsl(257, 80%, 65%);
+    --card-gradient-end: hsl(220, 90%, 70%);
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  .glow-text {
+    text-shadow: 0 0 8px hsl(var(--primary) / 0.5), 0 0 20px hsl(var(--accent) / 0.3);
+  }
+}
+
+/* Keyframes for floating orbs */
+@keyframes float-orb-1 {
+  0%, 100% { transform: translate(0, 0) rotate(0deg); }
+  50% { transform: translate(20px, -30px) rotate(20deg); }
+}
+
+@keyframes float-orb-2 {
+  0%, 100% { transform: translate(0, 0) rotate(0deg); }
+  50% { transform: translate(-30px, 25px) rotate(-15deg); }
+}
+
+@keyframes float-orb-3 {
+  0%, 100% { transform: translate(0, 0) rotate(0deg); }
+  50% { transform: translate(10px, 35px) rotate(10deg); }
+}
+
+@keyframes float-orb-4 {
+  0%, 100% { transform: translate(0, 0) rotate(0deg); }
+  50% { transform: translate(25px, -15px) rotate(-25deg); }
+}
