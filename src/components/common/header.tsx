@@ -3,7 +3,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
-import { Clapperboard, Search, ShieldCheck, LogIn, LogOut, X } from "lucide-react";
+import { Clapperboard, Search, ShieldCheck, LogIn, LogOut, X, MoreVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/auth-context";
 import {
@@ -19,11 +19,13 @@ import { Skeleton } from "../ui/skeleton";
 import { Input } from "../ui/input";
 import { useSearch } from "@/context/search-context";
 import { cn } from "@/lib/utils";
+import { Checkbox } from "../ui/checkbox";
 
 export default function Header() {
   const { user, userProfile, loading, logout } = useAuth();
-  const { searchQuery, setSearchQuery } = useSearch();
+  const { searchQuery, setSearchQuery, selectedGenres, setSelectedGenres, allGenres, showFeaturedOnly, setShowFeaturedOnly } = useSearch();
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isGenresOpen, setIsGenresOpen] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   const getInitials = (name?: string | null) => {
@@ -55,6 +57,14 @@ export default function Header() {
        }
     }
   }
+
+  const handleGenreToggle = (genre: string) => {
+    setSelectedGenres(
+      selectedGenres.includes(genre)
+        ? selectedGenres.filter(g => g !== genre)
+        : [...selectedGenres, genre]
+    );
+  };
 
   return (
     <header className="bg-background/70 backdrop-blur-sm border-b border-border/50 sticky top-0 z-50">
@@ -98,6 +108,73 @@ export default function Header() {
                     <span className="sr-only">Buscar</span>
                   </Link>
                 </Button>
+
+                {/* Género Filter Menu */}
+                <DropdownMenu open={isGenresOpen} onOpenChange={setIsGenresOpen}>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" title="Filtrar por géneros">
+                      <MoreVertical className="h-5 w-5" />
+                      <span className="sr-only">Géneros</span>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="w-56 max-h-96 overflow-y-auto" align="end">
+                    <DropdownMenuLabel>Filtrar por Género</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    
+                    {/* Opción de Contenido Destacado */}
+                    <div className="p-2 border-b">
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id="featured-content"
+                          checked={showFeaturedOnly}
+                          onCheckedChange={(checked) => setShowFeaturedOnly(checked as boolean)}
+                        />
+                        <label
+                          htmlFor="featured-content"
+                          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                        >
+                          🔥 Animes H
+                        </label>
+                      </div>
+                    </div>
+
+                    {/* Géneros */}
+                    {allGenres.length > 0 ? (
+                      <div className="space-y-2 p-2">
+                        {allGenres.map((genre) => (
+                          <div key={genre} className="flex items-center space-x-2">
+                            <Checkbox
+                              id={`genre-${genre}`}
+                              checked={selectedGenres.includes(genre)}
+                              onCheckedChange={() => handleGenreToggle(genre)}
+                            />
+                            <label
+                              htmlFor={`genre-${genre}`}
+                              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                            >
+                              {genre}
+                            </label>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <DropdownMenuItem disabled>
+                        No hay géneros disponibles
+                      </DropdownMenuItem>
+                    )}
+                    {(selectedGenres.length > 0 || showFeaturedOnly) && (
+                      <>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem onClick={() => {
+                          setSelectedGenres([]);
+                          setShowFeaturedOnly(false);
+                        }}>
+                          Limpiar todos los filtros
+                        </DropdownMenuItem>
+                      </>
+                    )}
+                  </DropdownMenuContent>
+                </DropdownMenu>
             </div>
             
             {userProfile?.role === 'admin' && (

@@ -26,6 +26,7 @@ import { db } from '@/lib/firebase';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 import React from "react";
 import { Label } from "../ui/label";
+import { Checkbox } from "../ui/checkbox";
 
 
 const chapterSchema = z.object({
@@ -68,6 +69,7 @@ const formSchema = z.object({
   seasons: z.array(seasonSchema).min(1, { message: "Debes agregar al menos una temporada o película."}),
   dataAiHint: z.string().min(2, { message: "AI hint must be at least 2 characters." }),
   views: z.number().optional(),
+  featured: z.boolean().optional(),
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -103,6 +105,7 @@ export function AddAnimeForm({ animeToEdit, onSuccess }: AddAnimeFormProps) {
             ...s,
             movieUrl: s.type === 'movie' ? s.chapters[0]?.url || '' : null,
           })),
+          featured: animeToEdit.featured || false,
         }
       : {
           title: "",
@@ -115,6 +118,7 @@ export function AddAnimeForm({ animeToEdit, onSuccess }: AddAnimeFormProps) {
           seasons: [getDefaultSeason()],
           dataAiHint: "anime",
           views: 0,
+          featured: false,
         },
   });
 
@@ -226,6 +230,7 @@ export function AddAnimeForm({ animeToEdit, onSuccess }: AddAnimeFormProps) {
         genres: genresArray,
         seasons: processedSeasons,
         views: values.views ?? 0,
+        featured: values.featured || false,
       };
 
       if (isEditMode) {
@@ -252,6 +257,7 @@ export function AddAnimeForm({ animeToEdit, onSuccess }: AddAnimeFormProps) {
           seasons: [getDefaultSeason()],
           dataAiHint: "anime",
           views: 0,
+          featured: false,
         });
         setCode('');
       }
@@ -416,6 +422,25 @@ export function AddAnimeForm({ animeToEdit, onSuccess }: AddAnimeFormProps) {
                 )}
               />
             </div>
+
+            <FormField
+              control={form.control}
+              name="featured"
+              render={({ field }) => (
+                <FormItem className="flex items-center space-x-2">
+                  <FormControl>
+                    <Checkbox
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                      id="featured"
+                    />
+                  </FormControl>
+                  <FormLabel htmlFor="featured" className="font-normal cursor-pointer">
+                    Mostrar en Destacados
+                  </FormLabel>
+                </FormItem>
+              )}
+            />
 
             <Separator />
             

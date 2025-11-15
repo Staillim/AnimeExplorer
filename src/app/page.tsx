@@ -29,7 +29,7 @@ export default function Home() {
     Autoplay({ delay: 5000, stopOnInteraction: true })
   );
 
-  const { searchQuery, searchResults, setAllAnimes } = useSearch();
+  const { searchQuery, searchResults, setAllAnimes, selectedGenres, showFeaturedOnly } = useSearch();
 
   useEffect(() => {
     const fetchAnimes = async () => {
@@ -47,10 +47,17 @@ export default function Home() {
         }
 
         const genresForSections = ['Acción', 'Comedia', 'Drama', 'Fantasía', 'Sci-Fi'];
-        const sectionsData: CarouselSection[] = [
-          { title: 'Tendencias', animes: trendingAnimes.slice(0, 15) },
-          { title: 'Agregados Recientemente', animes: animes.slice(0, 15) },
-        ];
+        const sectionsData: CarouselSection[] = [];
+        
+        // Agregar sección de Destacados si hay animes con featured = true
+        const featuredAnimes = animes.filter(a => a.featured);
+        if (featuredAnimes.length > 0) {
+          sectionsData.push({ title: 'Destacados', animes: featuredAnimes.slice(0, 15) });
+        }
+        
+        sectionsData.push({ title: 'Tendencias', animes: trendingAnimes.slice(0, 15) });
+        sectionsData.push({ title: 'Agregados Recientemente', animes: animes.slice(0, 15) });
+        
         genresForSections.forEach(genre => {
           const filtered = animes.filter(a => a.genres.includes(genre));
           if (filtered.length > 0) {
@@ -103,6 +110,48 @@ export default function Home() {
             ) : (
                 <p className="text-center text-muted-foreground text-lg py-16">
                     No se encontraron resultados para tu búsqueda.
+                </p>
+            )}
+        </div>
+      );
+    }
+
+    if (selectedGenres.length > 0) {
+      return (
+        <div className="space-y-8">
+            <h2 className="text-3xl font-bold font-headline glow-text text-primary-foreground">
+                Géneros: <span className="text-accent">{selectedGenres.join(', ')}</span>
+            </h2>
+            {searchResults.length > 0 ? (
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-x-4 gap-y-8">
+                    {searchResults.map(anime => (
+                        <AnimeCard key={anime.id} anime={anime} />
+                    ))}
+                </div>
+            ) : (
+                <p className="text-center text-muted-foreground text-lg py-16">
+                    No se encontraron animes en los géneros seleccionados.
+                </p>
+            )}
+        </div>
+      );
+    }
+
+    if (showFeaturedOnly) {
+      return (
+        <div className="space-y-8">
+            <h2 className="text-3xl font-bold font-headline glow-text text-primary-foreground">
+                🔥 <span className="text-accent">Animes H</span>
+            </h2>
+            {searchResults.length > 0 ? (
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-x-4 gap-y-8">
+                    {searchResults.map(anime => (
+                        <AnimeCard key={anime.id} anime={anime} />
+                    ))}
+                </div>
+            ) : (
+                <p className="text-center text-muted-foreground text-lg py-16">
+                    No hay contenido destacado disponible.
                 </p>
             )}
         </div>

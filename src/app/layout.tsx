@@ -11,6 +11,12 @@ import { SearchProvider } from '@/context/search-context';
 export const metadata: Metadata = {
   title: 'PlayWave',
   description: 'Explore a world of content.',
+  viewport: {
+    width: 'device-width',
+    initialScale: 1,
+    maximumScale: 1,
+    userScalable: false,
+  },
 };
 
 const Orb = ({ className, animation }: { className: string; animation: string }) => (

@@ -26,6 +26,7 @@ export interface Anime {
   rating: number;
   views?: number;
   seasons: Season[];
+  featured?: boolean;
 }
 
 export interface Ad {

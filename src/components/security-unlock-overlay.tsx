@@ -86,16 +86,16 @@ export default function SecurityUnlockOverlay({
       case 'idle':
         return (
           <>
-            <div className="text-sm md:text-base text-muted-foreground mb-2">
+            <div className="text-xs sm:text-sm md:text-base text-muted-foreground mb-1 sm:mb-2">
               Bloqueo de Seguridad {adNumber} de {totalAds}
             </div>
-            <h2 className="text-2xl md:text-3xl font-bold font-headline text-primary">Contenido Bloqueado</h2>
-            <p className="text-base md:text-lg text-muted-foreground max-w-md">
+            <h2 className="text-lg sm:text-2xl md:text-3xl font-bold font-headline text-primary">Contenido Bloqueado</h2>
+            <p className="text-xs sm:text-base md:text-lg text-muted-foreground max-w-md">
               Haz clic en el anuncio y espera {viewTimeSeconds} segundos antes de volver para desbloquear.
             </p>
-            <Button onClick={handleAdClick} size="lg" className="animate-pulse">
-              <Hourglass className="mr-2" />
-              Visitar Anuncio para Desbloquear
+            <Button onClick={handleAdClick} size="sm" className="animate-pulse mt-2 sm:mt-4 sm:size-lg">
+              <Hourglass className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
+              <span className="text-xs sm:text-sm">Visitar Anuncio</span>
             </Button>
           </>
         );
@@ -103,12 +103,12 @@ export default function SecurityUnlockOverlay({
       case 'verifying':
         return (
           <>
-            <div className="text-sm md:text-base text-muted-foreground mb-2">
+            <div className="text-xs sm:text-sm md:text-base text-muted-foreground mb-1 sm:mb-2">
               Bloqueo de Seguridad {adNumber} de {totalAds}
             </div>
-            <h2 className="text-2xl md:text-3xl font-bold">Verificando...</h2>
-            <Loader2 className="h-12 w-12 animate-spin text-primary" />
-            <p className="text-base md:text-lg text-muted-foreground max-w-md">
+            <h2 className="text-lg sm:text-2xl md:text-3xl font-bold">Verificando...</h2>
+            <Loader2 className="h-8 sm:h-12 w-8 sm:w-12 animate-spin text-primary" />
+            <p className="text-xs sm:text-base md:text-lg text-muted-foreground max-w-md">
               Por favor, regresa a esta pestaña una vez que hayas visto el anuncio.
             </p>
           </>
@@ -116,29 +116,29 @@ export default function SecurityUnlockOverlay({
       case 'failed':
         return (
           <>
-            <div className="text-sm md:text-base text-muted-foreground mb-2">
+            <div className="text-xs sm:text-sm md:text-base text-muted-foreground mb-1 sm:mb-2">
               Bloqueo de Seguridad {adNumber} de {totalAds}
             </div>
-            <AlertTriangle className="h-12 w-12 text-destructive" />
-            <h2 className="text-2xl md:text-3xl font-bold">Verificación Fallida</h2>
-            <p className="text-base md:text-lg text-muted-foreground max-w-md">
+            <AlertTriangle className="h-8 sm:h-12 w-8 sm:w-12 text-destructive" />
+            <h2 className="text-lg sm:text-2xl md:text-3xl font-bold">Verificación Fallida</h2>
+            <p className="text-xs sm:text-base md:text-lg text-muted-foreground max-w-md">
               Debes permanecer en la página del anuncio al menos {viewTimeSeconds} segundos.
             </p>
-            <Button onClick={handleReset} size="lg" variant="outline">
-              <RotateCw className="mr-2" />
-              Intentar de Nuevo
+            <Button onClick={handleReset} size="sm" variant="outline" className="mt-2 sm:mt-4 sm:size-lg">
+              <RotateCw className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
+              <span className="text-xs sm:text-sm">Intentar de Nuevo</span>
             </Button>
           </>
         );
       case 'countdown':
         return (
           <>
-            <div className="text-sm md:text-base text-muted-foreground mb-2">
+            <div className="text-xs sm:text-sm md:text-base text-muted-foreground mb-1 sm:mb-2">
               Bloqueo de Seguridad {adNumber} de {totalAds}
             </div>
-            <CheckCircle className="h-12 w-12 text-green-400" />
-            <h2 className="text-2xl md:text-3xl font-bold">¡Gracias!</h2>
-            <p className="text-base md:text-lg text-muted-foreground max-w-md">
+            <CheckCircle className="h-8 sm:h-12 w-8 sm:w-12 text-green-400" />
+            <h2 className="text-lg sm:text-2xl md:text-3xl font-bold">¡Gracias!</h2>
+            <p className="text-xs sm:text-base md:text-lg text-muted-foreground max-w-md">
               Desbloqueando en {countdown} segundo(s)...
             </p>
           </>
@@ -147,7 +147,7 @@ export default function SecurityUnlockOverlay({
   }
 
   return (
-    <div className="absolute inset-0 bg-black/80 backdrop-blur-sm flex flex-col items-center justify-center z-10 text-white p-4 space-y-6 text-center">
+    <div className="absolute inset-0 bg-black/80 backdrop-blur-sm flex flex-col items-center justify-center z-10 text-white p-3 sm:p-4 space-y-2 sm:space-y-4 text-center overflow-y-auto">
       {renderContent()}
     </div>
   );

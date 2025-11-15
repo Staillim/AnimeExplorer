@@ -13,7 +13,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "../ui/button";
-import { Edit, Trash2, Loader2, Search } from "lucide-react";
+import { Edit, Trash2, Loader2, Search, Star } from "lucide-react";
 import Image from "next/image";
 import Link from 'next/link';
 import {
@@ -28,7 +28,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/lib/hooks/use-toast";
-import { doc, deleteDoc } from 'firebase/firestore';
+import { doc, deleteDoc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Badge } from '../ui/badge';
 import { Input } from '../ui/input';
@@ -40,6 +40,7 @@ interface AnimeListProps {
 export function AnimeList({ animes }: AnimeListProps) {
   const { toast } = useToast();
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
+  const [isUpdating, setIsUpdating] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
 
   const filteredAnimes = useMemo(() => {
@@ -67,6 +68,28 @@ export function AnimeList({ animes }: AnimeListProps) {
       });
     }
     setIsDeleting(null);
+  };
+
+  const handleToggleFeatured = async (animeId: string, currentFeatured: boolean) => {
+    setIsUpdating(animeId);
+    try {
+      await updateDoc(doc(db, 'animes', animeId), {
+        featured: !currentFeatured
+      });
+      toast({
+        title: currentFeatured ? "Removido de Destacados" : "Agregado a Destacados",
+        description: currentFeatured 
+          ? "El anime ha sido removido de la sección destacados." 
+          : "El anime ha sido agregado a la sección destacados.",
+      });
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Error al actualizar",
+        description: error.message || "Ocurrió un error inesperado.",
+      });
+    }
+    setIsUpdating(null);
   };
 
   return (
@@ -127,6 +150,19 @@ export function AnimeList({ animes }: AnimeListProps) {
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex gap-2 justify-end">
+                        <Button 
+                          variant={anime.featured ? "default" : "ghost"} 
+                          size="icon"
+                          onClick={() => handleToggleFeatured(anime.id, anime.featured || false)}
+                          disabled={isUpdating === anime.id}
+                          title={anime.featured ? "Remover de Destacados" : "Agregar a Destacados"}
+                        >
+                          {isUpdating === anime.id ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Star className={`h-4 w-4 ${anime.featured ? 'fill-current' : ''}`} />
+                          )}
+                        </Button>
                         <Button asChild variant="ghost" size="icon">
                           <Link href={`/admin/edit/${anime.id}`}>
                               <Edit className="h-4 w-4" />
