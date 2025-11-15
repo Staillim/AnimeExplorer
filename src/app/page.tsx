@@ -5,6 +5,8 @@ import { useState, useEffect, useMemo, useRef } from 'react';
 import { collection, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { Anime } from '@/lib/types';
+import { useCachedAnimes } from '@/lib/hooks/use-cache';
+import { setupNetworkCache } from '@/lib/cache';
 import AnimeCard from '@/components/anime-card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
@@ -30,6 +32,11 @@ export default function Home() {
   );
 
   const { searchResults, setAllAnimes, selectedGenres, showFeaturedOnly } = useSearch();
+
+  useEffect(() => {
+    // Configurar Service Worker para caché de red
+    setupNetworkCache();
+  }, []);
 
   useEffect(() => {
     const fetchAnimes = async () => {
