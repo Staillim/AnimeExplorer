@@ -331,7 +331,7 @@ export default function AnimeDetailPage() {
                                     src={selectedChapter.url}
                                     title={selectedChapter.title || `Capítulo ${selectedChapterIndex + 1}`}
                                     frameBorder="0"
-                                    allow="accelerometer *; autoplay *; clipboard-write *; encrypted-media *; fullscreen *; gyroscope *; picture-in-picture *; web-share *"
+                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; fullscreen; gyroscope; picture-in-picture; web-share"
                                     allowFullScreen
                                     className="w-full h-full"
                                     webkitallowfullscreen="true"

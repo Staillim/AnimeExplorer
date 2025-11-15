@@ -16,11 +16,7 @@ const nextConfig: NextConfig = {
         headers: [
           {
             key: 'Permissions-Policy',
-            value: 'accelerometer=*, autoplay=*, clipboard-write=*, encrypted-media=*, fullscreen=*, gyroscope=*, picture-in-picture=*, web-share=*, geolocation=*, camera=*, microphone=*'
-          },
-          {
-            key: 'Cross-Origin-Embedder-Policy',
-            value: 'credentialless'
+            value: 'accelerometer=(self), autoplay=(self), clipboard-write=(self), encrypted-media=(self), fullscreen=(self), gyroscope=(self), picture-in-picture=(self), web-share=(self)'
           }
         ]
       }
