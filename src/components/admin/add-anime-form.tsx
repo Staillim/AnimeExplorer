@@ -224,6 +224,7 @@ export function AddAnimeForm({ animeToEdit, onSuccess }: AddAnimeFormProps) {
         };
       });
 
+      const now = Date.now();
       const submissionData = {
         ...values,
         bannerImage: values.bannerImage || `https://placehold.co/1200x400.png`,
@@ -231,6 +232,8 @@ export function AddAnimeForm({ animeToEdit, onSuccess }: AddAnimeFormProps) {
         seasons: processedSeasons,
         views: values.views ?? 0,
         featured: values.featured || false,
+        updatedAt: now,
+        ...(isEditMode ? {} : { createdAt: now }),
       };
 
       if (isEditMode) {

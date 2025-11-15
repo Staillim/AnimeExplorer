@@ -27,6 +27,8 @@ export interface Anime {
   views?: number;
   seasons: Season[];
   featured?: boolean;
+  createdAt?: number; // Timestamp de creación
+  updatedAt?: number; // Timestamp de última modificación
 }
 
 export interface Ad {

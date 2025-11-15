@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useEffect, useMemo, useRef } from 'react';
-import { collection, getDocs, query, orderBy } from 'firebase/firestore';
+import { collection, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { Anime } from '@/lib/types';
 import AnimeCard from '@/components/anime-card';
@@ -35,8 +35,7 @@ export default function Home() {
     const fetchAnimes = async () => {
       try {
         const animesCollection = collection(db, 'animes');
-        const allDocsQuery = query(animesCollection, orderBy('year', 'desc'));
-        const animeSnapshot = await getDocs(allDocsQuery);
+        const animeSnapshot = await getDocs(animesCollection);
         const animes = animeSnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as Anime));
         
         setAllAnimes(animes);
@@ -56,7 +55,10 @@ export default function Home() {
         }
         
         sectionsData.push({ title: 'Tendencias', animes: trendingAnimes.slice(0, 15) });
-        sectionsData.push({ title: 'Agregados Recientemente', animes: animes.slice(0, 15) });
+        
+        // Ordenar por fecha de creación (los más recientes primero)
+        const recentAnimes = [...animes].sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+        sectionsData.push({ title: 'Agregados Recientemente', animes: recentAnimes.slice(0, 15) });
         
         genresForSections.forEach(genre => {
           const filtered = animes.filter(a => a.genres.includes(genre));
