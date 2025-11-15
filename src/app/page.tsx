@@ -29,7 +29,7 @@ export default function Home() {
     Autoplay({ delay: 5000, stopOnInteraction: true })
   );
 
-  const { searchQuery, searchResults, setAllAnimes, selectedGenres, showFeaturedOnly } = useSearch();
+  const { searchResults, setAllAnimes, selectedGenres, showFeaturedOnly } = useSearch();
 
   useEffect(() => {
     const fetchAnimes = async () => {
@@ -94,27 +94,6 @@ export default function Home() {
             ))}
           </div>
         </>
-      );
-    }
-
-    if (searchQuery) {
-      return (
-        <div className="space-y-8">
-            <h2 className="text-3xl font-bold font-headline glow-text text-primary-foreground">
-                Resultados para: <span className="text-accent">{searchQuery}</span>
-            </h2>
-            {searchResults.length > 0 ? (
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-x-4 gap-y-8">
-                    {searchResults.map(anime => (
-                        <AnimeCard key={anime.id} anime={anime} />
-                    ))}
-                </div>
-            ) : (
-                <p className="text-center text-muted-foreground text-lg py-16">
-                    No se encontraron resultados para tu búsqueda.
-                </p>
-            )}
-        </div>
       );
     }
 

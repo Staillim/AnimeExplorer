@@ -1,5 +1,5 @@
 
-import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import type { Anime } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
@@ -12,19 +12,24 @@ interface AnimeCardProps {
 }
 
 export default function AnimeCard({ anime }: AnimeCardProps) {
+  const router = useRouter();
   const languages = Array.from(new Set((anime.seasons || []).map(s => s.language)));
 
-  const handleCardClick = async () => {
+  const handleCardClick = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    
+    // Incrementar vistas
     const animeRef = doc(db, "animes", anime.id);
     try {
-      // Increment the views field by 1 atomically.
-      // This is a server-side operation, safe and race-condition-free.
       await updateDoc(animeRef, {
         views: increment(1)
       });
     } catch (error) {
       console.error("Error updating views: ", error);
     }
+    
+    // Navegar al anime
+    router.push(`/anime/${anime.id}`);
   };
 
 
@@ -51,7 +56,7 @@ export default function AnimeCard({ anime }: AnimeCardProps) {
   ];
 
   return (
-    <Link href={`/anime/${anime.id}`} onClick={handleCardClick} className="group relative block w-full h-full">
+    <div onClick={handleCardClick} className="group relative block w-full h-full cursor-pointer">
       {/* Orb background effect */}
       <div 
         className={cn(
@@ -111,6 +116,6 @@ export default function AnimeCard({ anime }: AnimeCardProps) {
           </h3>
         </div>
       </div>
-    </Link>
+    </div>
   );
 }

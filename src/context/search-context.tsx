@@ -5,8 +5,6 @@ import { createContext, useContext, useState, useEffect, useMemo } from "react";
 import type { Anime } from "@/lib/types";
 
 interface SearchContextType {
-  searchQuery: string;
-  setSearchQuery: (query: string) => void;
   selectedGenres: string[];
   setSelectedGenres: (genres: string[]) => void;
   showFeaturedOnly: boolean;
@@ -20,7 +18,6 @@ interface SearchContextType {
 const SearchContext = createContext<SearchContextType | undefined>(undefined);
 
 export function SearchProvider({ children }: { children: React.ReactNode }) {
-  const [searchQuery, setSearchQuery] = useState("");
   const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
   const [showFeaturedOnly, setShowFeaturedOnly] = useState(false);
   const [allAnimes, setAllAnimes] = useState<Anime[]>([]);
@@ -37,17 +34,6 @@ export function SearchProvider({ children }: { children: React.ReactNode }) {
   const searchResults = useMemo(() => {
     let results = allAnimes;
 
-    // Filtrar por query de búsqueda
-    if (searchQuery.trim()) {
-      const lowercasedQuery = searchQuery.toLowerCase();
-      results = results.filter(anime => {
-        const titleMatch = anime.title.toLowerCase().includes(lowercasedQuery);
-        const genreMatch = anime.genres.some(genre => genre.toLowerCase().includes(lowercasedQuery));
-        const yearMatch = anime.year.toString().includes(lowercasedQuery);
-        return titleMatch || genreMatch || yearMatch;
-      });
-    }
-
     // Filtrar por géneros seleccionados
     if (selectedGenres.length > 0) {
       results = results.filter(anime => 
@@ -61,11 +47,9 @@ export function SearchProvider({ children }: { children: React.ReactNode }) {
     }
 
     return results;
-  }, [searchQuery, allAnimes, selectedGenres, showFeaturedOnly]);
+  }, [allAnimes, selectedGenres, showFeaturedOnly]);
 
   const value = {
-    searchQuery,
-    setSearchQuery,
     selectedGenres,
     setSelectedGenres,
     showFeaturedOnly,

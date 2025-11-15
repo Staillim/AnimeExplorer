@@ -2,6 +2,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Clapperboard, Search, ShieldCheck, LogIn, LogOut, X, MoreVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -22,9 +23,11 @@ import { cn } from "@/lib/utils";
 import { Checkbox } from "../ui/checkbox";
 
 export default function Header() {
+  const router = useRouter();
   const { user, userProfile, loading, logout } = useAuth();
-  const { searchQuery, setSearchQuery, selectedGenres, setSelectedGenres, allGenres, showFeaturedOnly, setShowFeaturedOnly } = useSearch();
+  const { selectedGenres, setSelectedGenres, allGenres, showFeaturedOnly, setShowFeaturedOnly } = useSearch();
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [searchInput, setSearchInput] = useState("");
   const [isGenresOpen, setIsGenresOpen] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
@@ -41,22 +44,31 @@ export default function Header() {
   
   // Clear search when search bar is closed and query exists
   const handleToggleSearch = () => {
-    if (isSearchOpen && searchQuery) {
-      setSearchQuery('');
+    if (isSearchOpen && searchInput) {
+      setSearchInput('');
     }
     setIsSearchOpen(!isSearchOpen);
+  };
+  
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchInput.trim()) {
+      router.push(`/search?q=${encodeURIComponent(searchInput.trim())}`);
+      setSearchInput('');
+      setIsSearchOpen(false);
+    }
   };
   
   // Handle closing on blur, but not if the search icon itself was clicked
   const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
     // relatedTarget is the element receiving focus
-    if (!e.relatedTarget?.closest('#search-toggle-button')) {
+    if (!e.relatedTarget?.closest('#search-toggle-button') && !e.relatedTarget?.closest('form')) {
       setIsSearchOpen(false);
-       if (searchQuery) {
-          setSearchQuery('');
+       if (searchInput) {
+          setSearchInput('');
        }
     }
-  }
+  };
 
   const handleGenreToggle = (genre: string) => {
     setSelectedGenres(
@@ -83,7 +95,7 @@ export default function Header() {
           <nav className="flex items-center gap-1 sm:gap-2">
             
             <div className="flex items-center justify-end gap-1">
-               <div className={cn(
+               <form onSubmit={handleSearchSubmit} className={cn(
                   "flex items-center transition-all duration-300 ease-in-out",
                   isSearchOpen ? "w-48 sm:w-64" : "w-0"
                 )}>
@@ -95,18 +107,16 @@ export default function Header() {
                     "w-full bg-input border-0 h-10 transition-all duration-300 ease-in-out",
                      isSearchOpen ? "opacity-100 px-3" : "opacity-0 p-0"
                   )}
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
+                  value={searchInput}
+                  onChange={(e) => setSearchInput(e.target.value)}
                   onBlur={handleBlur}
                   aria-label="Search"
                 />
-              </div>
+              </form>
 
-               <Button id="search-toggle-button" asChild variant="ghost" size="icon" onClick={handleToggleSearch}>
-                  <Link href="#">
-                    {isSearchOpen ? <X className="h-5 w-5"/> : <Search className="h-5 w-5" />}
-                    <span className="sr-only">Buscar</span>
-                  </Link>
+               <Button id="search-toggle-button" variant="ghost" size="icon" onClick={handleToggleSearch}>
+                  {isSearchOpen ? <X className="h-5 w-5"/> : <Search className="h-5 w-5" />}
+                  <span className="sr-only">Buscar</span>
                 </Button>
 
                 {/* Género Filter Menu */}
