@@ -9,6 +9,23 @@ const nextConfig: NextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
   },
+  headers: async () => {
+    return [
+      {
+        source: '/:path*',
+        headers: [
+          {
+            key: 'Permissions-Policy',
+            value: 'accelerometer=*, autoplay=*, clipboard-write=*, encrypted-media=*, fullscreen=*, gyroscope=*, picture-in-picture=*, web-share=*, geolocation=*, camera=*, microphone=*'
+          },
+          {
+            key: 'Cross-Origin-Embedder-Policy',
+            value: 'credentialless'
+          }
+        ]
+      }
+    ]
+  },
   images: {
     remotePatterns: [
       {

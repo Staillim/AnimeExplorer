@@ -313,8 +313,8 @@ export default function AnimeDetailPage() {
                               </Select>
                            )}
                         </div>
-                        <div className="p-1 md:p-2 bg-black/50 rounded-lg ring-2 ring-primary/30 shadow-2xl shadow-primary/20">
-                            <div className="relative aspect-video rounded-md overflow-hidden">
+                        <div className="p-1 md:p-2 bg-black/50 rounded-lg ring-2 ring-primary/30 shadow-2xl shadow-primary/20 w-full">
+                            <div className="relative w-full aspect-video rounded-md overflow-hidden">
                                { isPlayerLocked && currentAdQueue.length > 0 && currentAdIndex < currentAdQueue.length && (
                                     <SecurityUnlockOverlay 
                                         key={`${currentAdIndex}-${currentAdQueue[currentAdIndex].ad.id}`}
@@ -331,11 +331,11 @@ export default function AnimeDetailPage() {
                                     src={selectedChapter.url}
                                     title={selectedChapter.title || `Capítulo ${selectedChapterIndex + 1}`}
                                     frameBorder="0"
-                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; fullscreen; gyroscope; picture-in-picture; web-share"
+                                    allow="accelerometer *; autoplay *; clipboard-write *; encrypted-media *; fullscreen *; gyroscope *; picture-in-picture *; web-share *"
                                     allowFullScreen
+                                    className="w-full h-full"
                                     webkitallowfullscreen="true"
                                     mozallowfullscreen="true"
-                                    className="w-full h-full"
                                 ></iframe>
                             </div>
                         </div>
