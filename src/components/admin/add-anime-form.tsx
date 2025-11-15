@@ -157,6 +157,19 @@ export function AddAnimeForm({ animeToEdit, onSuccess }: AddAnimeFormProps) {
         
         const dataAiHint = genres.slice(0, 2).join(' ').toLowerCase() || 'anime';
 
+        // Extraer URL de película del formato [Opción N|URL]
+        let movieUrl = '';
+        if (isMovie) {
+          const movieUrlMatch = code.match(/\[opción\s+\d+\|(https?:\/\/[^\]]+)\]/i);
+          movieUrl = movieUrlMatch ? movieUrlMatch[1].trim() : '';
+          
+          // Si no encuentra en ese formato, busca cualquier URL entre | ]
+          if (!movieUrl) {
+            const alternativeMatch = code.match(/\|(\s*https?:\/\/[^\]\|\n]+)\]/);
+            movieUrl = alternativeMatch ? alternativeMatch[1].trim() : '';
+          }
+        }
+
         form.reset({
             title,
             year,
@@ -171,10 +184,14 @@ export function AddAnimeForm({ animeToEdit, onSuccess }: AddAnimeFormProps) {
         });
 
         if (isMovie) {
-            replaceSeasons([getDefaultSeason('movie', title)]);
+            const movieSeason = getDefaultSeason('movie', title);
+            if (movieUrl) {
+              movieSeason.movieUrl = movieUrl;
+            }
+            replaceSeasons([movieSeason]);
             toast({
                 title: "Tipo Película Detectado",
-                description: "Por favor, añade la URL de reproducción.",
+                description: movieUrl ? "URL de reproducción encontrada y rellenada." : "Por favor, añade la URL de reproducción.",
             });
         } else if (isSerie) {
             const episodeMatches = code.matchAll(/<a href=".*?" class="episodo">/g);
