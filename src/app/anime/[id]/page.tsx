@@ -8,7 +8,7 @@ import { doc, getDoc, updateDoc, getDocs, collection } from 'firebase/firestore'
 import { db } from '@/lib/firebase';
 import type { Anime, Ad, Season } from '@/lib/types';
 import { useAuth } from '@/context/auth-context';
-import { Star, Calendar, Tv, PlayCircle, Loader2, ChevronLeft, ChevronRight, Film } from 'lucide-react';
+import { Star, Calendar, Tv, PlayCircle, Loader2, ChevronLeft, ChevronRight, Film, Share2, Copy, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import SecurityUnlockOverlay from '@/components/security-unlock-overlay';
@@ -57,6 +57,8 @@ export default function AnimeDetailPage() {
     const [isPlayerLocked, setIsPlayerLocked] = useState(true);
     const [currentAdQueue, setCurrentAdQueue] = useState<Array<{ad: Ad, index: number}>>([]);
     const [currentAdIndex, setCurrentAdIndex] = useState(0);
+    const [showShareMessage, setShowShareMessage] = useState(false);
+    const [copied, setCopied] = useState(false);
     const adTimerRef = useRef<NodeJS.Timeout | null>(null);
     
     const selectedSeason = anime?.seasons[selectedSeasonIndex];
@@ -224,6 +226,34 @@ export default function AnimeDetailPage() {
         updateUserWatchHistory(seasonIndex, 0);
       }
     };
+
+    const handleShare = async () => {
+      const shareUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}/anime/${anime?.id}`;
+      const shareData = {
+        title: anime?.title,
+        text: `${anime?.title} - ${anime?.description?.substring(0, 50)}...`,
+        url: shareUrl,
+      };
+
+      if (navigator.share) {
+        try {
+          await navigator.share(shareData);
+        } catch (err: any) {
+          if (err.name !== 'AbortError') {
+            console.error('Error compartiendo:', err);
+          }
+        }
+      } else {
+        // Fallback: copiar al portapapeles
+        try {
+          await navigator.clipboard.writeText(shareUrl);
+          setCopied(true);
+          setTimeout(() => setCopied(false), 2000);
+        } catch (err) {
+          console.error('Error copiando al portapapeles:', err);
+        }
+      }
+    };
     
     if (loading) {
         return (
@@ -298,7 +328,31 @@ export default function AnimeDetailPage() {
                            <h2 className="text-2xl font-bold font-headline glow-text text-primary">
                                 {isMovie ? `Viendo: ${anime.title}` : `Viendo: ${selectedSeason.title}`}
                            </h2>
-                           {!isMovie && anime.seasons.length > 1 && (
+                           <div className="flex items-center gap-2">
+                             <Button 
+                               onClick={handleShare}
+                               size="sm"
+                               variant="outline"
+                               className="gap-2"
+                             >
+                               {copied ? (
+                                 <>
+                                   <Check className="h-4 w-4" />
+                                   <span>¡Copiado!</span>
+                                 </>
+                               ) : navigator.share ? (
+                                 <>
+                                   <Share2 className="h-4 w-4" />
+                                   <span className="hidden sm:inline">Compartir</span>
+                                 </>
+                               ) : (
+                                 <>
+                                   <Copy className="h-4 w-4" />
+                                   <span className="hidden sm:inline">Copiar enlace</span>
+                                 </>
+                               )}
+                             </Button>
+                             {!isMovie && anime.seasons.length > 1 && (
                               <Select onValueChange={(value) => handleSeasonSelect(Number(value))} value={String(selectedSeasonIndex)}>
                                 <SelectTrigger className="w-full md:w-[280px]">
                                   <SelectValue placeholder="Seleccionar temporada" />
@@ -311,7 +365,8 @@ export default function AnimeDetailPage() {
                                   ))}
                                 </SelectContent>
                               </Select>
-                           )}
+                             )}
+                           </div>
                         </div>
                         <div className="p-1 md:p-2 bg-black/50 rounded-lg ring-2 ring-primary/30 shadow-2xl shadow-primary/20 w-full [&:fullscreen]:p-0 [&:fullscreen]:rounded-none">
                             <div className="relative w-full aspect-video rounded-md overflow-hidden [&:fullscreen]:rounded-none [&:fullscreen]:aspect-auto [&:fullscreen]:h-screen">
