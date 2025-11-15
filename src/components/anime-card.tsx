@@ -13,7 +13,6 @@ interface AnimeCardProps {
 
 export default function AnimeCard({ anime }: AnimeCardProps) {
   const router = useRouter();
-  const languages = Array.from(new Set((anime.seasons || []).map(s => s.language)));
 
   const handleCardClick = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -101,14 +100,6 @@ export default function AnimeCard({ anime }: AnimeCardProps) {
         />
 
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
-        
-        <div className="absolute top-2 right-2 flex flex-col gap-1.5 z-20">
-          {languages.map(lang => (
-            <Badge key={lang} variant="secondary" className="text-xs uppercase shadow-md backdrop-blur-sm">
-              {lang}
-            </Badge>
-          ))}
-        </div>
         
         <div className="absolute bottom-0 left-0 p-4 w-full z-20">
           <h3 className="text-lg font-bold text-white truncate opacity-0 transform translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300">
