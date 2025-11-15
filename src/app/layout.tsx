@@ -9,7 +9,7 @@ import { AuthProvider } from '@/context/auth-context';
 import { SearchProvider } from '@/context/search-context';
 
 export const metadata: Metadata = {
-  title: 'PlayWave',
+  title: 'CineStelar',
   description: 'Explore a world of content.',
   viewport: {
     width: 'device-width',

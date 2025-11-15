@@ -76,7 +76,7 @@ export default function Header() {
               "text-lg sm:text-xl font-bold font-headline tracking-tight group-hover:glow-text transition-all duration-300",
               isSearchOpen && "hidden md:block" // Hide title on mobile when search is open
               )}>
-              PlayWave
+              CineStelar
             </span>
           </Link>
           
